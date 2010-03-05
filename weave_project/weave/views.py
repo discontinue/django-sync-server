@@ -26,9 +26,10 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 
 # http://code.google.com/p/django-tools/
-from django_tools.decorators import check_permissions
+from django_tools.decorators import check_permissions, render_to
 
 from weave.models import Collection, Wbo
+from weave.forms import ChangePasswordForm
 
 
 def _timestamp():
@@ -69,7 +70,8 @@ def assert_username(debug=False):
 
             if not user.is_authenticated():
                 msg = "Permission denied for anonymous user. Please log in."
-                request.page_msg.error(msg)
+                if debug:
+                    print msg
                 raise PermissionDenied(msg)
 
             username = kwargs["username"]
@@ -77,7 +79,7 @@ def assert_username(debug=False):
                 msg = "Wrong user!"
                 if debug:
                     msg += " (%r != %r)" % (user.username, username)
-                request.page_msg.error(msg)
+                    print msg
                 raise PermissionDenied("Wrong user!")
 
             return view_function(request, *args, **kwargs)
@@ -137,12 +139,18 @@ class RecordNotFoundResponse(HttpResponse):
         self._container = [content]
 
 
-
+#@render_to('weave/root_view.html')
+@json_response(debug=True)
 def root_view(request):
     print " *** root_view! ***"
     _debug_request(request)
+    return "1"
 
-    return "weave plugin, use this url: %s" % request.build_absolute_uri()
+    context = {
+        "url": request.build_absolute_uri()
+    }
+
+    return context
 
 
 
@@ -409,6 +417,54 @@ def sign_in(request, version, username):
 #    return response
 
 
+
+def chpwd(request):
+    print "_" * 79
+    print "chpwd:"
+    _debug_request(request)
+
+    if request.method != 'POST':
+        print "wrong request method"
+#        raise PermissionDenied()
+
+    form = ChangePasswordForm(request.POST)
+    if not form.is_valid():
+        print "Form error:"
+        print form.errors
+#        raise PermissionDenied
+
+    username = form.cleaned_data["username"]
+    password = form.cleaned_data["password"]
+    new = form.cleaned_data["new"]
+
+    print "TODO: Change Password for user %r old pass %r to new pass %r" % (
+        username, password, new
+    )
+    response_content = "0"
+#    else:
+#        response_content = "1"
+
+    response = HttpResponse(response_content, content_type='text/html')
+    response["X-Weave-Timestamp"] = _timestamp()
+    return response
+
+def register_check(request, username):
+    print "_" * 79
+    print "register_check:"
+    _debug_request(request)
+
+    try:
+        User.objects.get(username=username)
+    except User.DoesNotExist:
+        response_content = "0"
+    else:
+        response_content = "1"
+
+    response = HttpResponse(response_content, content_type='text/html')
+    response["X-Weave-Timestamp"] = _timestamp()
+    return response
+
+
 @assert_username(debug=True)
 @json_response(debug=True)
 def exist_user(request, version, username):
@@ -422,7 +478,7 @@ def exist_user(request, version, username):
     print "exist_user:"
     _debug_request(request)
 
-    exist = User.objects.get(username=username).count()
+    User.objects.get(username=username)
     if exist:
         response_content = "1"
     else:

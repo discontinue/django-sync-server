@@ -5,9 +5,12 @@
     :license: GNU GPL v3 or above, see LICENSE for more details.
 """
 
+from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import models
+from django.contrib.sites.models import Site
+from django.utils.translation import ugettext as _
+from django.contrib.sites.managers import CurrentSiteManager
 
 # http://code.google.com/p/django-tools/
 from django_tools.middlewares import ThreadLocal

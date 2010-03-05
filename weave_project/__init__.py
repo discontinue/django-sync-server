@@ -28,8 +28,10 @@ def check_require(requirements):
 
 
 requirements = (
+    "django >= 1.2-pre-alpha",
+
     # http://code.google.com/p/django-tools/
-    "django-tools >= 0.6.0beta",
+    "django-tools >= 0.7.0beta",
 
     # http://code.google.com/p/django-reversion/
     "django-reversion >= 1.1.2",

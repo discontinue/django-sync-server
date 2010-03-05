@@ -106,6 +106,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+
+    'django_tools.middlewares.ThreadLocal.ThreadLocalMiddleware',
 )
 
 ROOT_URLCONF = 'weave_project.urls'
@@ -125,8 +127,9 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
-    # Uncomment the next line to enable the admin:
-    # 'django.contrib.admin',
+    'django.contrib.admin',
+
+    "weave",
 )
 
 try:
