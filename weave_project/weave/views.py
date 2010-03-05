@@ -132,6 +132,17 @@ def json_response(debug=False):
     return renderer
 
 
+def _bool_response(resp):
+    if resp in (True, "1"):
+        response_content = "1"
+    else:
+        response_content = "0"
+
+    response = HttpResponse(response_content, content_type='text/html')
+    response["X-Weave-Timestamp"] = _timestamp()
+    return response
+
+
 class RecordNotFoundResponse(HttpResponse):
     status_code = 404
     def __init__(self, content='"record not found"'):
@@ -144,13 +155,8 @@ class RecordNotFoundResponse(HttpResponse):
 def root_view(request):
     print " *** root_view! ***"
     _debug_request(request)
-    return "1"
 
-    context = {
-        "url": request.build_absolute_uri()
-    }
-
-    return context
+    return _bool_response(True)
 
 
 
@@ -187,8 +193,8 @@ content: '{"meta": "1265104735.79"}'
         timestamps[wbo["wboid"]] = str(timestamp)
 
     print timestamps
-
     return timestamps
+
 
 @assert_username(debug=True)
 @check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
@@ -256,8 +262,8 @@ def storage_wboid(request, version, username, wboid):
         data["modified"] = _datetime2epochtime(wbo.lastupdatetime)
         return data
     else:
-
         raise NotImplemented
+
 
 @assert_username(debug=True)
 @check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
@@ -440,15 +446,13 @@ def chpwd(request):
     print "TODO: Change Password for user %r old pass %r to new pass %r" % (
         username, password, new
     )
-    response_content = "0"
-#    else:
-#        response_content = "1"
+    return _bool_response(False)
 
-    response = HttpResponse(response_content, content_type='text/html')
-    response["X-Weave-Timestamp"] = _timestamp()
-    return response
 
 def register_check(request, username):
+    """
+    Returns 1 if the username exist, 0 if not exist.
+    """
     print "_" * 79
     print "register_check:"
     _debug_request(request)
@@ -456,13 +460,10 @@ def register_check(request, username):
     try:
         User.objects.get(username=username)
     except User.DoesNotExist:
-        response_content = "0"
+        return _bool_response(False)
     else:
-        response_content = "1"
+        return _bool_response(True)
 
-    response = HttpResponse(response_content, content_type='text/html')
-    response["X-Weave-Timestamp"] = _timestamp()
-    return response
 
 
 @assert_username(debug=True)
@@ -478,15 +479,7 @@ def exist_user(request, version, username):
     print "exist_user:"
     _debug_request(request)
 
-    User.objects.get(username=username)
-    if exist:
-        response_content = "1"
-    else:
-        response_content = "0"
-
-    response = HttpResponse(response_content, content_type='text/html')
-    response["X-Weave-Timestamp"] = _timestamp()
-    return response
+    return register_check(request, username)
 
 
 def captcha_html(request, version):
