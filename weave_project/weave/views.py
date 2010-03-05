@@ -1,5 +1,10 @@
 # coding: utf-8
 
+"""
+    :copyleft: 2010 by the django-weave team, see AUTHORS for more details.
+    :license: GNU GPL v3 or above, see LICENSE for more details.
+"""
+
 import time
 import datetime
 import traceback

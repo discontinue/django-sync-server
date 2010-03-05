@@ -1,4 +1,42 @@
-# Django settings for weave_project project.
+# coding: utf-8
+
+"""
+    weave_project.settings
+    ~~~~~~~~~~~~~~~~~~~~~~
+
+    IMPORTANT:
+        You should not edit this file!
+        Owerwrite settings with a local settings file:
+            local_settings.py
+
+    Here are not all settings predifined you can use. Please look at the
+    django documentation for a full list of all items:
+        http://www.djangoproject.com/documentation/settings/
+
+    Last commit info:
+    ~~~~~~~~~~~~~~~~~
+    $LastChangedDate:$
+    $Rev:$
+    $Author: JensDiemer $
+
+    :copyleft: 2010 by the django-weave team, see AUTHORS for more details.
+    :license: GNU GPL v3 or above, see LICENSE for more details.
+"""
+
+import os
+import sys
+
+try:
+    #from django_tools.utils import info_print;info_print.redirect_stdout()
+    import django
+    import weave
+except Exception, e:
+    import traceback
+    print traceback.format_exc()
+    raise
+
+
+WEAVE_PROJECT_ROOT = os.path.join(os.path.dirname(__file__))
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -12,22 +50,21 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '',                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+        'NAME': '', # Or path to database file if using sqlite3.
+        'USER': '', # Not used with sqlite3.
+        'PASSWORD': '', # Not used with sqlite3.
+        'HOST': '', # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '', # Set to empty string for default. Not used with sqlite3.
     }
 }
 
-# Local time zone for this installation. Choices can be found here:
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-# although not all choices may be available on all operating systems.
-# On Unix systems, a value of None will cause Django to use the same
-# timezone as the operating system.
-# If running in a Windows environment this must be set to the same as your
-# system time zone.
-TIME_ZONE = 'America/Chicago'
+# Django can't handling time zone very good.
+# The Django default TIME_ZONE is 'America/Chicago' (Central Standard Time Zone, (CST), UTC-6)
+# but this is not the best choice.
+# We set it to "UTC" (same as Greenwich Mean Time, GMT-0, without daylight-saving time)
+# All datetime (e.g. model createtime) would be stored in UTC.
+# See also: http://groups.google.com/group/django-developers/browse_thread/thread/4ca560ef33c88bf3
+TIME_ZONE = "UTC"
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -54,7 +91,7 @@ MEDIA_URL = ''
 ADMIN_MEDIA_PREFIX = '/media/'
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '5z6jspmjj=xtos7c@8p9iiibx2k28%n$!6$x61x%s&yf=_vns*'
+SECRET_KEY = "Make this unique, and don't share it with anybody!"
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -77,6 +114,9 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+
+    os.path.join(os.path.abspath(os.path.dirname(weave.__file__)), "contrib/admin/templates"),
+    os.path.join(os.path.abspath(os.path.dirname(django.__file__)), "contrib/admin/templates"),
 )
 
 INSTALLED_APPS = (
@@ -88,3 +128,8 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
 )
+
+try:
+    from local_settings import *
+except ImportError:
+    pass
