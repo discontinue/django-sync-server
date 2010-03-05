@@ -1,0 +1,50 @@
+
+=============
+ description
+=============
+
+django-weave is a Django reusable application witch implements a Firefox weave server.
+
+=============
+ requirement
+=============
+
+:django-tools:
+  http://code.google.com/p/django-tools/
+
+:django-reversion:
+  http://code.google.com/p/django-reversion/
+
+=========
+ history
+=========
+
+- v0.0.1
+
+  - initial checkin
+
+=============
+ weave links
+=============
+
+:Weave homepage:
+  https://wiki.mozilla.org/Labs/Weave
+
+:reference implementation for a Weave server:
+  http://hg.mozilla.org/labs/weave/file/tip/tools/scripts/weave_server.py
+
+:Weave server test script:
+  http://hg.mozilla.org/labs/weave/file/tip/tools/scripts/weave_server_tester.py
+
+====================
+ django-weave links
+====================
+
+:homepage:
+  http://code.google.com/p/django-weave/
+
+:SVN:
+ http://django-weave.googlecode.com/svn/trunk/
+
+
+*(Readme text $Rev$)*
