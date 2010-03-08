@@ -95,7 +95,7 @@ class RecordNotFoundResponse(HttpResponse):
 @json_response(debug=True)
 def root_view(request):
     print " *** root_view! ***"
-    return
+    return {}
 
 
 
@@ -110,6 +110,7 @@ def info_collections(request, version, username):
     user = User.objects.get(username=username)
 
     collection_qs = Collection.on_site.filter(user=user)
+
     queryset = Wbo.objects.all()
     queryset = queryset.filter(collection__in=collection_qs)
     wbos = queryset.values("wboid", "lastupdatetime")
@@ -120,7 +121,6 @@ def info_collections(request, version, username):
         timestamp = datetime2epochtime(lastupdatetime) # datetime -> time since the epoch
         timestamps[wbo["wboid"]] = str(timestamp)
 
-    print timestamps
     return timestamps
 
 
