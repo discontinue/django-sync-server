@@ -7,8 +7,11 @@
 
 import time
 import httplib
+import logging
 import datetime
 import traceback
+from xml.etree import cElementTree as ET
+
 
 try:
     import json # New in Python v2.6
@@ -20,17 +23,19 @@ try:
 except ImportError:
     from django.utils.functional import wraps  # Python 2.3, 2.4 fallback.
 
-from django.http import HttpResponse
 from django.conf import settings
+from django.http import HttpResponseBadRequest, HttpResponse
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.shortcuts import render_to_response
+from django.template.loader import render_to_string
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.csrf import csrf_exempt
 
 # http://code.google.com/p/django-tools/
 from django_tools.decorators import check_permissions, render_to
 
-from weave.models import Collection, Wbo
+from weave.models import Lock, Collection, Wbo
 from weave.forms import ChangePasswordForm
 
 # from http://hg.mozilla.org/labs/weave/file/tip/tools/scripts/weave_server.py#l189
@@ -49,11 +54,18 @@ ERR_ACCOUNT_CREATED_VERIFICATION_SENT = "2"
 ERR_ACCOUNT_CREATED = "3"
 
 
+logging.basicConfig(level=logging.DEBUG)
+#logging.debug('This is a debug message')
+#logging.info('This is an info message')
+#logging.warning('This is a warning message')
+#logging.error('This is an error message')
+#logging.critical('This is a critical error message')
+
 
 def _timestamp():
-  # Weave rounds to 2 digits and so must we, otherwise rounding errors will
-  # influence the "newer" and "older" modifiers
-  return round(time.time(), 2)
+    # Weave rounds to 2 digits and so must we, otherwise rounding errors will
+    # influence the "newer" and "older" modifiers
+    return round(time.time(), 2)
 
 
 def _datetime2epochtime(dt):
@@ -136,13 +148,29 @@ def json_response(debug=False):
     return renderer
 
 
-class StatusResponse(HttpResponse):
-    status_code = 200
+
+class WeaveResponse(HttpResponse):
+    def __init__(self, *args, **kwargs):
+        super(WeaveResponse, self).__init__(*args, **kwargs)
+        self["X-Weave-Timestamp"] = _timestamp()
+
+class StatusResponse(WeaveResponse):
+    """ plaintext response with a status code in the content """
     def __init__(self, content="", status=None):
         super(StatusResponse, self).__init__(
             content=content, mimetype=None, status=status, content_type="text/plain"
         )
-        self["X-Weave-Timestamp"] = _timestamp()
+
+
+def render_xml_response(template_name, context, status=httplib.OK):
+    rendered = render_to_string(template_name, context)
+    response = WeaveResponse(content=rendered, content_type="text/xml", status=status)
+    return response
+
+#class XmlResponse(HttpResponse):
+#    def __init__(self,):
+#    def __init__(self, content='', mimetype=None, status=None,
+#            content_type=None):
 
 
 
@@ -163,8 +191,8 @@ def root_view(request):
 
 
 
-@assert_username(debug=True)
-@check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
+#@assert_username(debug=True)
+#@check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
 @json_response(debug=True)
 def info_collections(request, version, username):
     """
@@ -172,7 +200,6 @@ def info_collections(request, version, username):
     """
     print "_" * 79
     print "info_collections:"
-
 
     """
     GET
@@ -184,7 +211,7 @@ content: '{"meta": "1265104735.79"}'
 {'meta': {'global': '{"id": "global", "modified": 1265104735.79, "payload": "{\\"syncID\\":\\"l9SgOxeN7U\\",\\"storageVersion\\":\\"1.0\\"}"}'},
  'timestamps': {'meta': '1265104735.79'}}
     """
-    user = request.user
+    user = User.objects.get(username=username)
 
     collection_qs = Collection.on_site.filter(user=user)
     wbos = Wbo.objects.all().filter(collection__in=collection_qs).values("wboid", "lastupdatetime")
@@ -199,8 +226,9 @@ content: '{"meta": "1265104735.79"}'
     return timestamps
 
 
-@assert_username(debug=True)
-@check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
+#@assert_username(debug=True)
+#@check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
+@csrf_exempt
 @json_response(debug=True)
 def storage_wboid(request, version, username, wboid):
     """
@@ -211,8 +239,9 @@ def storage_wboid(request, version, username, wboid):
     print "_" * 79
     print "storage_wboid", wboid
 
+#    user = request.user
+    user = User.objects.get(username=username)
 
-    user = request.user
     if request.method == 'POST':
         payload = request.raw_post_data
         if not payload:
@@ -268,8 +297,9 @@ def storage_wboid(request, version, username, wboid):
         raise NotImplemented
 
 
-@assert_username(debug=True)
-@check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
+#@assert_username(debug=True)
+#@check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
+@csrf_exempt
 @json_response(debug=True)
 def storage(request, version, username, col_name, wboid):
     """
@@ -291,8 +321,8 @@ debug collections:
     print "_" * 79
     print "storage", col_name, wboid
 
-
-    user = request.user
+#    user = request.user
+    user = User.objects.get(username=username)
 
     if request.method == 'PUT':
         # https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#PUT
@@ -399,56 +429,101 @@ debug collections:
 #    return response
 
 
-@assert_username(debug=True)
-def sign_in(request, version, username):
-    """
-    finding cluster for user -> return 404 -> Using serverURL as data cluster (multi-cluster support disabled)
-    """
-    print "_" * 79
-    print "sign_in %r" % username
-    print "request.user: %r" % request.user
 
 
+def handle_lock(request, username, lock_path=None):
     try:
-        User.objects.get(username=username)
+        user = User.objects.get(username=username)
     except User.DoesNotExist:
-        return _bool_response(False)
-    else:
-        return _bool_response(True)
+        print "User %r doesn't exist!" % username
+        return StatusResponse(ERR_INVALID_UID)
 
-#    absolute_uri = request.build_absolute_uri()
+    print "request.raw_post_data: %r" % request.raw_post_data
 
-#    response = HttpResponse("",
-##                content_type='application/json'
-#        content_type='text/plain'
-#    )
-#    response["X-Weave-Timestamp"] = _timestamp()
-#
-#    return response
+    if request.method == 'PROPFIND':
+        if not lock_path:
+            locks = Lock.objects.filter(user=user)
+            items = [{"path": lock.lock_path, "prop": ""} for lock in locks]
+            context = {"items": items}
+            return render_xml_response("weave/propfind.xml", context, status=httplib.MULTI_STATUS)
+        else:
+            try:
+                lock = Lock.objects.get(user=user, lock_path=lock_path)
+            except Lock.DoesNotExist:
+    #            count = Lock.objects.filter(user=user).count()
+    #            token = "opaquelocktoken:%d" % (count + 1)
+                context = {
+                    "items": [{"path": lock_path, "prop": ""}]
+                }
+                return render_xml_response("weave/propfind.xml", context, status=httplib.MULTI_STATUS)
 
-#    return RecordNotFoundResponse(content="404 Not Found")
-#
-#    response = HttpResponse("", content_type='text/html')
-#    response["X-Weave-Timestamp"] = _timestamp()
-#    return response
+            context = {"token_id": lock.id}
+            return render_xml_response("weave/lock.xml", context)
+    elif request.method == 'LOCK':
+        lock, created = Lock.objects.get_or_create(user=user, lock_path=lock_path)
+        if created:
+            lock.save()
+            context = {"token_id": lock.id}
+            return render_xml_response("weave/lock.xml", context)
+        else:
+            return HttpResponse(status=httplib.LOCKED)
+
+#        raw_post_data = request.raw_post_data
+#        elementtree = ET.XML(raw_post_data)
+#        print elementtree
+#        token = elementtree.find(".//{DAV:}locktoken/{DAV:}href").text
+#        print token
+#        print "XXX"
+#        context = {"token_id": None}
+#        return render_xml_response("weave/lock.xml", context)
+
+
+
+    elif request.method == 'UNLOCK':
+        token = request.META["HTTP_LOCK_TOKEN"]
+        print "***", token
+
+        try:
+            lock = Lock.objects.get(user=user, lock_path=lock_path)
+        except Lock.DoesNotExist:
+            print "lock %r doesn't exist for user %r" % (lock_path, user)
+            #return WeaveResponse(status=httplib.BAD_REQUEST)
+        else:
+            lock.delete()
+
+        return WeaveResponse(status=httplib.NO_CONTENT)
+
+    raise
+
+#    def _handle_UNLOCK(self, path):
+#        
+#        if path not in self.locks:
+#            return HttpResponse(httplib.BAD_REQUEST)
+#        if token == "<%s>" % self.locks[path]:
+#            del self.locks[path]
+#            return HttpResponse(httplib.NO_CONTENT)
+#        return HttpResponse(httplib.BAD_REQUEST)
+
+
+    raise
+
+#        return StatusResponse(status=httplib.LOCKED)
 
 
 @csrf_exempt
 def chpwd(request):
-    print "_" * 79
-    print "chpwd:"
-
     if request.method != 'POST':
-        print " *** wrong request method"
-#        raise PermissionDenied()
+        logging.error("wrong request method %r" % request.method)
+        return HttpResponseBadRequest()
 
     form = ChangePasswordForm(request.POST)
     if not form.is_valid():
+        # TODO
         print "*** Form error:"
         print form.errors
         ERR_MISSING_UID
         ERR_MISSING_PASSWORD
-        raise # TODO
+        raise #FIXME return HttpResponseBadRequest(status=)
 
     username = form.cleaned_data["uid"]
     password = form.cleaned_data["password"] # the old password
@@ -457,24 +532,37 @@ def chpwd(request):
     try:
         user = User.objects.get(username=username)
     except User.DoesNotExist:
-        print "User %r doesn't exist!" % username
+        logging.debug("User %r doesn't exist!" % username)
         return StatusResponse(ERR_INVALID_UID)
 
     if user.check_password(password) != True:
-        print "Old password %r is wrong!" % password
+        logging.debug("Old password %r is wrong!" % password)
         return StatusResponse(ERR_INCORRECT_PASSWORD, httplib.BAD_REQUEST)
     else:
-        print "Old password %r is ok." % password
+        logging.debug("Old password %r is ok." % password)
 
     user.set_password(new)
     user.save()
-    print "Password for User %r changed from %r to %r" % (
-        username, password, new
-    )
+    logging.debug("Password for User %r changed from %r to %r" % (username, password, new))
     return StatusResponse()
 
 
 
+def sign_in(request, version, username):
+    """
+    finding cluster for user -> return 404 -> Using serverURL as data cluster (multi-cluster support disabled)
+    """
+    assert version == "1"
+
+    try:
+        User.objects.get(username=username)
+    except User.DoesNotExist:
+        logging.debug("User %r doesn't exist!" % username)
+        return StatusResponse(ERR_UID_OR_EMAIL_AVAILABLE)
+    else:
+        logging.debug("User %r exist." % username)
+
+        return StatusResponse(ERR_UID_OR_EMAIL_IN_USE, status="404")
 
 
 @csrf_exempt
@@ -482,22 +570,18 @@ def register_check(request, username):
     """
     Returns 1 if the username exist, 0 if not exist.
     """
-    print "_" * 79
-    print "register_check:"
-
     try:
         User.objects.get(username=username)
     except User.DoesNotExist:
-        print "User %r doesn't exist!" % username
+        logging.debug("User %r doesn't exist!" % username)
         return StatusResponse(ERR_UID_OR_EMAIL_AVAILABLE)
     else:
-        print "User %r exist." % username
+        logging.debug("User %r exist." % username)
         return StatusResponse(ERR_UID_OR_EMAIL_IN_USE)
 
 
 
-@assert_username(debug=True)
-@json_response(debug=True)
+@csrf_exempt
 def exist_user(request, version, username):
     """
     https://wiki.mozilla.org/Labs/Weave/User/1.0/API
@@ -505,11 +589,14 @@ def exist_user(request, version, username):
     
     e.g.: https://auth.services.mozilla.com/user/1/UserName
     """
-    print "_" * 79
-    print "exist_user:"
-
-
-    return register_check(request, username)
+    try:
+        User.objects.get(username=username)
+    except User.DoesNotExist:
+        logging.debug("User %r doesn't exist!" % username)
+        return StatusResponse("0")
+    else:
+        logging.debug("User %r exist." % username)
+        return StatusResponse("1")
 
 
 def captcha_html(request, version):

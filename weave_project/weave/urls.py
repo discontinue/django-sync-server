@@ -38,6 +38,7 @@ urlpatterns = patterns('',
     url(r'^user/(?P<version>.*?)/(?P<username>.*?)/node/weave$', views.sign_in, name='sign_in'),
     url(r'^user/(?P<version>.*?)/(?P<username>.*?)$', views.exist_user, name='exist_user'),
 
+    url(r'^user/(?P<username>.*?)/(?P<lock_path>.*?)$', views.handle_lock, name='handle_lock'),
 
     url(r'^api/register/chpwd/$', views.chpwd, name='chpwd'),
     url(r'^api/register/check/(?P<username>.*?)$', views.register_check, name='register_check'),

@@ -24,7 +24,13 @@ from django.contrib.auth.admin import UserAdmin
 
 from reversion.admin import VersionAdmin
 
-from weave.models import Wbo, Collection
+from weave.models import Lock, Wbo, Collection
+
+class LockAdmin(VersionAdmin):
+    list_display = ("id", "lastupdatetime", "user", "lock_path")
+    date_hierarchy = 'lastupdatetime'
+
+admin.site.register(Lock, LockAdmin)
 
 
 class WboAdmin(VersionAdmin):

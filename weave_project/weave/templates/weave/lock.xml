@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<D:prop xmlns:D="DAV:">
+ <D:lockdiscovery>
+   <D:activelock>
+     <D:locktoken>
+       <D:href>{{ token_id }}</D:href>
+     </D:locktoken>
+   </D:activelock>
+ </D:lockdiscovery>
+</D:prop>

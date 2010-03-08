@@ -1,14 +1,16 @@
-from django.conf.urls.defaults import *
+# coding: utf-8
+
+from django.conf.urls.defaults import patterns, include, url
 
 from django.contrib import admin
 admin.autodiscover()
 
+handler404 = 'django.views.defaults.page_not_found'
+handler500 = 'django.views.defaults.server_error'
+
 urlpatterns = patterns('',
-    (r'^weave_project/', include('weave_project.weave.urls')),
+    url(r'^weave_project/', include('weave_project.weave.urls')),
 
-    # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
-    # to INSTALLED_APPS to enable admin documentation:
-    # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-    (r'^admin/', include(admin.site.urls)),
+    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+    url(r'^admin/', include(admin.site.urls)),
 )

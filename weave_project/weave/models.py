@@ -45,6 +45,19 @@ class BaseModel(models.Model):
         abstract = True
 
 
+class Lock(BaseModel):
+    user = models.ForeignKey(User)
+    lock_path = models.CharField(max_length=255)
+#    lock_type = models.CharField(max_length=255)
+#    lock_scope = models.CharField(max_length=255)
+#    depth = models.CharField(max_length=255)
+#    timeout = models.PositiveIntegerField()
+
+    class Meta:
+        unique_together = ("user", "lock_path")
+
+
+
 class Collection(BaseModel):
     """
     https://wiki.mozilla.org/Labs/Weave/Sync/1.0/Setup

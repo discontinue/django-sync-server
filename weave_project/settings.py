@@ -32,11 +32,13 @@ try:
     import weave
 except Exception, e:
     import traceback
-    print traceback.format_exc()
+    print "-" * 79
+    sys.stderr.write(traceback.format_exc())
+    print "-" * 79
     raise
 
 
-WEAVE_PROJECT_ROOT = os.path.join(os.path.dirname(__file__))
+WEAVE_PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -114,12 +116,14 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'weave_project.urls'
 
+
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
 
-    os.path.join(os.path.abspath(os.path.dirname(weave.__file__)), "contrib/admin/templates"),
+    os.path.join(os.path.abspath(os.path.dirname(weave.__file__)), "templates"),
+    os.path.normpath(os.path.join(WEAVE_PROJECT_ROOT, "../../reversion/reversion/templates")),
     os.path.join(os.path.abspath(os.path.dirname(django.__file__)), "contrib/admin/templates"),
 )
 
@@ -130,6 +134,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.admin',
+    'django.contrib.admindocs',
 
     "weave",
 )
