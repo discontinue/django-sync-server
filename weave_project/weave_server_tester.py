@@ -179,7 +179,7 @@ class WeaveSession(object):
                                      "password" : self.password,
                                      "new" : new_password})
         req = urllib2.Request(url, postdata)
-        self._open(req).read()
+        print "change password reponse: %r" % self._open(req).read()
         self.password = new_password
 
     def share_with_users(self, path, users):
@@ -235,6 +235,7 @@ def _do_test(session_1, session_2):
         if e.code != httplib.BAD_REQUEST:
             raise
         content = e.read()
+        print "Content: %r" % content
         if content != weave_server.WeaveApp.ERR_INCORRECT_PASSWORD:
             raise AssertionError("Bad return value: %s" % content)
     else:

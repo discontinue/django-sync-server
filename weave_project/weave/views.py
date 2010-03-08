@@ -6,6 +6,7 @@
 """
 
 import time
+import httplib
 import datetime
 import traceback
 
@@ -24,12 +25,29 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
+from django.views.decorators.csrf import csrf_exempt
 
 # http://code.google.com/p/django-tools/
 from django_tools.decorators import check_permissions, render_to
 
 from weave.models import Collection, Wbo
 from weave.forms import ChangePasswordForm
+
+# from http://hg.mozilla.org/labs/weave/file/tip/tools/scripts/weave_server.py#l189
+ERR_UID_OR_EMAIL_AVAILABLE = "1"
+ERR_WRONG_HTTP_METHOD = "-1"
+ERR_MISSING_UID = "-2"
+ERR_INVALID_UID = "-3"
+ERR_UID_OR_EMAIL_IN_USE = "0"
+ERR_EMAIL_IN_USE = "-5"
+ERR_MISSING_PASSWORD = "-8"
+ERR_MISSING_RECAPTCHA_CHALLENGE_FIELD = "-6"
+ERR_MISSING_RECAPTCHA_RESPONSE_FIELD = "-7"
+ERR_MISSING_NEW = "-11"
+ERR_INCORRECT_PASSWORD = "-12"
+ERR_ACCOUNT_CREATED_VERIFICATION_SENT = "2"
+ERR_ACCOUNT_CREATED = "3"
+
 
 
 def _timestamp():
@@ -45,20 +63,6 @@ def _datetime2epochtime(dt):
     timestamp += (dt.microsecond / 1000000.0)
     return round(timestamp, 2)
 
-
-def _debug_request(request):
-    MAX = 120
-    def cut(s):
-        s = repr(s)
-        if len(s) > MAX:
-            return s[:MAX] + "..."
-        return s
-
-    print "request.META['CONTENT_LENGTH']: %r" % request.META['CONTENT_LENGTH']
-    print "request.GET: %r" % request.GET
-    print "request.POST: %s" % cut(request.POST)
-    print "request.FILES: %r" % request.FILES
-    print "request.raw_post_data: %s" % cut(request.raw_post_data)
 
 
 def assert_username(debug=False):
@@ -132,15 +136,14 @@ def json_response(debug=False):
     return renderer
 
 
-def _bool_response(resp):
-    if resp in (True, "1"):
-        response_content = "1"
-    else:
-        response_content = "0"
+class StatusResponse(HttpResponse):
+    status_code = 200
+    def __init__(self, content="", status=None):
+        super(StatusResponse, self).__init__(
+            content=content, mimetype=None, status=status, content_type="text/plain"
+        )
+        self["X-Weave-Timestamp"] = _timestamp()
 
-    response = HttpResponse(response_content, content_type='text/html')
-    response["X-Weave-Timestamp"] = _timestamp()
-    return response
 
 
 class RecordNotFoundResponse(HttpResponse):
@@ -154,7 +157,7 @@ class RecordNotFoundResponse(HttpResponse):
 @json_response(debug=True)
 def root_view(request):
     print " *** root_view! ***"
-    _debug_request(request)
+
 
     return _bool_response(True)
 
@@ -169,7 +172,7 @@ def info_collections(request, version, username):
     """
     print "_" * 79
     print "info_collections:"
-    _debug_request(request)
+
 
     """
     GET
@@ -207,7 +210,7 @@ def storage_wboid(request, version, username, wboid):
     """
     print "_" * 79
     print "storage_wboid", wboid
-    _debug_request(request)
+
 
     user = request.user
     if request.method == 'POST':
@@ -287,7 +290,7 @@ debug collections:
     """
     print "_" * 79
     print "storage", col_name, wboid
-    _debug_request(request)
+
 
     user = request.user
 
@@ -404,7 +407,14 @@ def sign_in(request, version, username):
     print "_" * 79
     print "sign_in %r" % username
     print "request.user: %r" % request.user
-    _debug_request(request)
+
+
+    try:
+        User.objects.get(username=username)
+    except User.DoesNotExist:
+        return _bool_response(False)
+    else:
+        return _bool_response(True)
 
 #    absolute_uri = request.build_absolute_uri()
 
@@ -416,53 +426,73 @@ def sign_in(request, version, username):
 #
 #    return response
 
-    return RecordNotFoundResponse(content="404 Not Found")
+#    return RecordNotFoundResponse(content="404 Not Found")
 #
 #    response = HttpResponse("", content_type='text/html')
 #    response["X-Weave-Timestamp"] = _timestamp()
 #    return response
 
 
-
+@csrf_exempt
 def chpwd(request):
     print "_" * 79
     print "chpwd:"
-    _debug_request(request)
 
     if request.method != 'POST':
-        print "wrong request method"
+        print " *** wrong request method"
 #        raise PermissionDenied()
 
     form = ChangePasswordForm(request.POST)
     if not form.is_valid():
-        print "Form error:"
+        print "*** Form error:"
         print form.errors
-#        raise PermissionDenied
+        ERR_MISSING_UID
+        ERR_MISSING_PASSWORD
+        raise # TODO
 
-    username = form.cleaned_data["username"]
-    password = form.cleaned_data["password"]
-    new = form.cleaned_data["new"]
+    username = form.cleaned_data["uid"]
+    password = form.cleaned_data["password"] # the old password
+    new = form.cleaned_data["new"] # the new password
 
-    print "TODO: Change Password for user %r old pass %r to new pass %r" % (
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        print "User %r doesn't exist!" % username
+        return StatusResponse(ERR_INVALID_UID)
+
+    if user.check_password(password) != True:
+        print "Old password %r is wrong!" % password
+        return StatusResponse(ERR_INCORRECT_PASSWORD, httplib.BAD_REQUEST)
+    else:
+        print "Old password %r is ok." % password
+
+    user.set_password(new)
+    user.save()
+    print "Password for User %r changed from %r to %r" % (
         username, password, new
     )
-    return _bool_response(False)
+    return StatusResponse()
 
 
+
+
+
+@csrf_exempt
 def register_check(request, username):
     """
     Returns 1 if the username exist, 0 if not exist.
     """
     print "_" * 79
     print "register_check:"
-    _debug_request(request)
 
     try:
         User.objects.get(username=username)
     except User.DoesNotExist:
-        return _bool_response(False)
+        print "User %r doesn't exist!" % username
+        return StatusResponse(ERR_UID_OR_EMAIL_AVAILABLE)
     else:
-        return _bool_response(True)
+        print "User %r exist." % username
+        return StatusResponse(ERR_UID_OR_EMAIL_IN_USE)
 
 
 
@@ -477,7 +507,7 @@ def exist_user(request, version, username):
     """
     print "_" * 79
     print "exist_user:"
-    _debug_request(request)
+
 
     return register_check(request, username)
 
@@ -485,7 +515,7 @@ def exist_user(request, version, username):
 def captcha_html(request, version):
     print "_" * 79
     print "captcha_html:"
-    _debug_request(request)
+
 
 #    raise Http404
     #response = HttpResponse("11", status=400, content_type='application/json')
@@ -497,7 +527,7 @@ def captcha_html(request, version):
 def setup_user(request, version, username):
     print "_" * 79
     print "setup_user", version, username
-    _debug_request(request)
+
 
     absolute_uri = request.build_absolute_uri()
 
