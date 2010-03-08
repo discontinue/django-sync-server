@@ -127,6 +127,10 @@ TEMPLATE_DIRS = (
     os.path.join(os.path.abspath(os.path.dirname(django.__file__)), "contrib/admin/templates"),
 )
 
+for dir in TEMPLATE_DIRS:
+    if not os.path.isdir(dir):
+        print "TEMPLATE_DIR %r doesn't exist!" % dir
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',

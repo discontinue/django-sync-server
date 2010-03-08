@@ -10,9 +10,16 @@ from django.conf import settings
 from django.utils import termcolors
 from django.contrib.redirects.models import Redirect
 from django.core.management.color import color_style
+from django.core import urlresolvers
+
+
 
 MAX = 120
 STACK_LIMIT = 60
+
+SKIP_URLS = (
+    urlresolvers.reverse("admin:index"),
+)
 
 
 def cut(s):
@@ -54,11 +61,21 @@ def cut(s):
 ##        print "%s %4s %s" % (filename, lineno, func_name)
 
 
+def skip_debug(request):
+    path = request.path
+    for skip_url in SKIP_URLS:
+        if path.startswith(skip_url):
+            return True
+    return False
+
 
 class DebugMiddleware(object):
     style = color_style()
 
     def process_view(self, request, view_func, view_args, view_kwargs):
+        if skip_debug(request):
+            return
+
         print "*** DebugMiddleware.process_view():"
 #        for i in dir(view_func):print i, getattr(view_func, i, "---")
         print "view: %s,  args: %r, kwagrs: %r" % (
@@ -66,6 +83,9 @@ class DebugMiddleware(object):
         )
 
     def process_request(self, request):
+        if skip_debug(request):
+            return
+
         print "-" * 79
         print "*** DebugMiddleware.process_request():"
         print "request.path: %s" % self.style.SQL_FIELD(request.path)
@@ -80,13 +100,16 @@ class DebugMiddleware(object):
 #        print sys.exc_info()
 
     def process_exception(self, request, exception):
-        print "*** DebugMiddleware.process_exception():"
+        print self.style.NOTICE("*** DebugMiddleware.process_exception():")
 #        print_stack_info()
         message = cut(str(exception))
         print message
         print traceback.format_exc()
 
     def process_response(self, request, response):
+        if skip_debug(request):
+            return response
+
         print "*** DebugMiddleware.process_response():"
 #        print_stack_info()
 #        print sys.exc_info()

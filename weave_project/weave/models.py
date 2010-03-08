@@ -5,6 +5,11 @@
     :license: GNU GPL v3 or above, see LICENSE for more details.
 """
 
+try:
+    import json # New in Python v2.6
+except ImportError:
+    from django.utils import simplejson as json
+
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -14,6 +19,8 @@ from django.contrib.sites.managers import CurrentSiteManager
 
 # http://code.google.com/p/django-tools/
 from django_tools.middlewares import ThreadLocal
+
+from weave.utils import timestamp, datetime2epochtime
 
 
 class BaseModel(models.Model):
@@ -88,6 +95,10 @@ class Collection(BaseModel):
         ordering = ("-lastupdatetime",)
 
 
+#class WboManager(models.Manager):
+#    def get_payload(self):
+
+
 class Wbo(BaseModel):
     """
     https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API   
@@ -99,6 +110,8 @@ class Wbo(BaseModel):
         createby       -> ForeignKey to user who creaded this entry
         lastupdateby   -> ForeignKey to user who has edited this entry
     """
+#    objects = WboManager()
+
     collection = models.ForeignKey(Collection, blank=True, null=True)
     user = models.ForeignKey(User)
     wboid = models.CharField(max_length=64, blank=True,
@@ -118,6 +131,14 @@ class Wbo(BaseModel):
             " specify a record for decryption."
         )
     )
+
+    def get_payload_dict(self):
+        """ return json payload as dict and add modified timestamp """
+        payload = self.payload
+        lastupdatetime = self.lastupdatetime
+        payload_dict = json.loads(payload)
+        payload_dict["modified"] = datetime2epochtime(lastupdatetime)
+        return payload_dict
 
     def __unicode__(self):
         return u"weave wbo %r (%r)" % (self.wboid, self.collection)
