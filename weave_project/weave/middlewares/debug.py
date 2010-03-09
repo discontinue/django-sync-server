@@ -20,6 +20,9 @@ STACK_LIMIT = 60
 SKIP_URLS = (
     urlresolvers.reverse("admin:index"),
 )
+# Activate only debug, if this string is in the url, debug every request, if None:
+#DEBUG_ONLY = "pubkey"
+DEBUG_ONLY = None
 
 
 def cut(s):
@@ -62,10 +65,13 @@ def cut(s):
 
 
 def skip_debug(request):
+    if DEBUG_ONLY is not None and DEBUG_ONLY not in request.path:
+        return True # No debugging
+
     path = request.path
     for skip_url in SKIP_URLS:
         if path.startswith(skip_url):
-            return True
+            return True # No debugging
     return False
 
 
@@ -88,10 +94,13 @@ class DebugMiddleware(object):
 
         print "-" * 79
         print "*** DebugMiddleware.process_request():"
-        print "request.path: %s" % self.style.SQL_FIELD(request.path)
-        print "request.method: %r" % request.method
+        print self.style.SQL_TABLE(request.method), self.style.SQL_FIELD(request.build_absolute_uri())
         print "request.META['CONTENT_LENGTH']: %r" % request.META['CONTENT_LENGTH']
-#        for k, v in sorted(request.META.iteritems()): print k, v
+        for k, v in sorted(request.META.iteritems()):
+            if k.startswith("HTTP_ACCEPT"):
+                print k, self.style.HTTP_NOT_MODIFIED(v)
+            elif k.startswith("HTTP"):
+                print k, v
         print "request.GET: %r" % request.GET
         print "request.POST: %s" % cut(request.POST)
         print "request.FILES: %r" % request.FILES
@@ -115,7 +124,13 @@ class DebugMiddleware(object):
 #        print sys.exc_info()
         print "response: %r" % response
         print "response headers: %r" % response._headers
-        print "response.status_code: %r" % response.status_code
+        status_code = response.status_code
+        status_code_msg = "response.status_code: %r" % response.status_code
+        if status_code == 200:
+            print self.style.SQL_KEYWORD(status_code_msg)
+        else:
+            print self.style.NOTICE(status_code_msg)
+
         print "response.content: %s" % cut(response.content)
 #        print "response.content:"
 #        print response.content

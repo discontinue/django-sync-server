@@ -20,7 +20,8 @@ from django.contrib.sites.managers import CurrentSiteManager
 # http://code.google.com/p/django-tools/
 from django_tools.middlewares import ThreadLocal
 
-from weave.utils import timestamp, datetime2epochtime
+# django-weave own stuff
+from utils import timestamp, datetime2epochtime
 
 
 class BaseModel(models.Model):
@@ -123,6 +124,7 @@ class Wbo(BaseModel):
     sortindex = models.IntegerField(null=True, blank=True,
         help_text="An integer indicting the relative importance of this item in the collection.",
     )
+    modified = models.FloatField(help_text="X-Weave-Timestamp")
     payload = models.TextField(blank=True,
         help_text=(
             "A string containing a JSON structure encapsulating the data of the record."
@@ -137,7 +139,7 @@ class Wbo(BaseModel):
         payload = self.payload
         lastupdatetime = self.lastupdatetime
         payload_dict = json.loads(payload)
-        payload_dict["modified"] = datetime2epochtime(lastupdatetime)
+        payload_dict["modified"] = self.modified
         return payload_dict
 
     def __unicode__(self):

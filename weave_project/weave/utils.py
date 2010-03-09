@@ -15,4 +15,7 @@ def datetime2epochtime(dt):
     timestamp = time.mktime(dt.timetuple()) # datetime -> time since the epoch
     # Add microseconds. FIXME: Is there a easier way?
     timestamp += (dt.microsecond / 1000000.0)
-    return round(timestamp, 2)
+    print "round: %r" % timestamp,
+    timestamp = round(timestamp, 2)
+    print "to %r" % timestamp
+    return timestamp

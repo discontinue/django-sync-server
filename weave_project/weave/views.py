@@ -31,10 +31,11 @@ from django.http import HttpResponseBadRequest, HttpResponse
 # http://code.google.com/p/django-tools/
 from django_tools.decorators import check_permissions, render_to
 
-from weave.models import Lock, Collection, Wbo
-from weave.forms import ChangePasswordForm
-from weave.utils import timestamp, datetime2epochtime
-from weave.decorators import json_response
+# django-weave own stuff
+from models import Lock, Collection, Wbo
+from forms import ChangePasswordForm
+from utils import timestamp, datetime2epochtime
+from decorators import json_response
 
 
 # from http://hg.mozilla.org/labs/weave/file/tip/tools/scripts/weave_server.py#l189
@@ -64,29 +65,34 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class WeaveResponse(HttpResponse):
-    def __init__(self, *args, **kwargs):
-        super(WeaveResponse, self).__init__(*args, **kwargs)
-        self["X-Weave-Timestamp"] = timestamp()
+    def __init__(self, content='', status=None, content_type=None, weave_timestamp=None):
+        super(WeaveResponse, self).__init__(content=content, status=status, content_type=content_type)
+
+        if weave_timestamp is None:
+            weave_timestamp = timestamp()
+        self["X-Weave-Timestamp"] = "%.2f" % weave_timestamp
 
 
-class StatusResponse(WeaveResponse):
+class PlaintextResponse(WeaveResponse):
     """ plaintext response with a status code in the content """
-    def __init__(self, content="", status=None):
-        super(StatusResponse, self).__init__(
-            content=content, mimetype=None, status=status, content_type="text/plain"
+    def __init__(self, content="", status=None, weave_timestamp=None):
+        super(PlaintextResponse, self).__init__(
+            content=content, status=status, content_type="text/plain", weave_timestamp=weave_timestamp
         )
 
 
-def render_xml_response(template_name, context, status=httplib.OK):
+def render_xml_response(template_name, context, status=httplib.OK, weave_timestamp=None):
     rendered = render_to_string(template_name, context)
-    response = WeaveResponse(content=rendered, content_type="text/xml", status=status)
+    response = WeaveResponse(
+        content=rendered, content_type="text/xml", status=status, weave_timestamp=weave_timestamp
+    )
     return response
 
 
 
-class RecordNotFoundResponse(HttpResponse):
+class RecordNotFoundResponse(WeaveResponse):
     status_code = 404
-    def __init__(self, content='"record not found"'):
+    def __init__(self, content='record not found'):
         HttpResponse.__init__(self)
         self._container = [content]
 
@@ -113,15 +119,17 @@ def info_collections(request, version, username):
 
     queryset = Wbo.objects.all()
     queryset = queryset.filter(collection__in=collection_qs)
-    wbos = queryset.values("wboid", "lastupdatetime")
+    wbos = queryset.values("wboid", "modified")
 
+    newest = 0
     timestamps = {}
     for wbo in wbos:
-        lastupdatetime = wbo["lastupdatetime"]
-        timestamp = datetime2epochtime(lastupdatetime) # datetime -> time since the epoch
-        timestamps[wbo["wboid"]] = str(timestamp)
+        modified = wbo["modified"]
+        if modified > newest:
+            newest = modified
+        timestamps[wbo["wboid"]] = "%.2f" % modified
 
-    return timestamps
+    return timestamps, newest
 
 
 #@assert_username(debug=True)
@@ -168,6 +176,7 @@ def storage_wboid(request, version, username, wboid):
                 defaults={
                     "parentid": item.get("parentid", None), # FIXME: must wboid + parentid be unique?
                     "sortindex": item.get("sortindex", None),
+                    "modified": item.get("modified", timestamp()),
                     "payload": item["payload"],
                 }
             )
@@ -176,23 +185,30 @@ def storage_wboid(request, version, username, wboid):
             else:
                 wbo.parentid = item.get("parentid", None)
                 wbo.sortindex = item.get("sortindex", None)
+                wbo.modified = item.get("modified", timestamp())
                 wbo.payload = item["payload"]
                 wbo.save()
                 logging.info("Existing wbo updated: %r" % wbo)
 
 #        assert val["id"] == wboid, "wrong wbo id: %r != %r" % (val["id"], wboid)
-        return {}
+        return {}, wbo.modified
     elif request.method == 'GET':
         try:
             wbo = Wbo.objects.filter(user=user).get(wboid=wboid)
         except Wbo.DoesNotExist:
-            logging.info("Wbo %r not exist for user %r" % (wboid, user))
-            return RecordNotFoundResponse()
+            msg = "Wbo %r not exist for user %r" % (wboid, user)
+            logging.info(msg)
+            return RecordNotFoundResponse(msg)
 
         payload_dict = wbo.get_payload_dict()
-        return payload_dict
+        return payload_dict, wbo.modified
+    elif request.method == 'DELETE':
+        wbo = Wbo.objects.filter(user=user).get(wboid=wboid)
+        logging.info("Delete Wbo %r for user %r" % (wboid, user))
+        wbo.delete()
+        return WeaveResponse()
     else:
-        raise NotImplemented
+        raise NotImplementedError("%r is not implemented" % request.method)
 
 
 #@assert_username(debug=True)
@@ -231,40 +247,48 @@ def storage(request, version, username, col_name, wboid):
         else:
             logging.info("Collection %r exists" % collection)
 
-        sortindex = val.get("sortindex", None)
-
-        wbo = Wbo(
+        wbo, created = Wbo.objects.get_or_create(
             collection=collection,
             user=user,
             wboid=wboid,
-            sortindex=sortindex,
-            payload=payload
+            defaults={
+                "parentid": val.get("parentid", None), # FIXME: must wboid + parentid be unique?
+                "sortindex": val.get("sortindex", None),
+                "modified": val.get("modified", timestamp()),
+                "payload": val["payload"],
+            }
         )
-        wbo.save()
+        if created:
+            logging.info("New wbo created: %r" % wbo)
+        else:
+            wbo.parentid = val.get("parentid", None)
+            wbo.sortindex = val.get("sortindex", None)
+            wbo.modified = val.get("modified", timestamp())
+            wbo.payload = val["payload"]
+            wbo.save()
+            logging.info("Existing wbo updated: %r" % wbo)
 
         # The server will return the timestamp associated with the modification.
-        data = {wboid: datetime2epochtime(wbo.lastupdatetime)}
-        return data
+        data = {wboid: wbo.modified}
+        return data, wbo.modified
     elif request.method == 'GET':
         # Returns a list of the WBO ids contained in a collection.
         try:
             collection = Collection.on_site.get(user=user, name=col_name)
         except Collection.DoesNotExist:
-            logging.info(
-                "Collection %r for user %r not found" % (col_name, user)
-            )
-            return RecordNotFoundResponse()
+            msg = "Collection %r for user %r not found" % (col_name, user)
+            logging.info(msg)
+            return RecordNotFoundResponse(msg)
 
         try:
             wbo = Wbo.objects.all().filter(collection=collection).get(wboid=wboid)
         except Wbo.DoesNotExist:
-            logging.info(
-                "Wbo %r not exist for collection %r" % (wboid, collection)
-            )
-            return RecordNotFoundResponse()
+            msg = "Wbo %r not exist for collection %r" % (wboid, collection)
+            logging.info(msg)
+            return RecordNotFoundResponse(msg)
 
         payload_dict = wbo.get_payload_dict()
-        return payload_dict
+        return payload_dict, wbo.modified
     else:
         raise NotImplemented
 
@@ -279,7 +303,7 @@ def handle_lock(request, username, lock_path=None):
         user = User.objects.get(username=username)
     except User.DoesNotExist:
         print "User %r doesn't exist!" % username
-        return StatusResponse(ERR_INVALID_UID)
+        return PlaintextResponse(ERR_INVALID_UID)
 
     print "request.raw_post_data: %r" % request.raw_post_data
 
@@ -350,7 +374,7 @@ def handle_lock(request, username, lock_path=None):
 
     raise
 
-#        return StatusResponse(status=httplib.LOCKED)
+#        return PlaintextResponse(status=httplib.LOCKED)
 
 
 @csrf_exempt
@@ -379,18 +403,18 @@ def chpwd(request):
         user = User.objects.get(username=username)
     except User.DoesNotExist:
         logging.debug("User %r doesn't exist!" % username)
-        return StatusResponse(ERR_INVALID_UID)
+        return PlaintextResponse(ERR_INVALID_UID)
 
     if user.check_password(password) != True:
         logging.debug("Old password %r is wrong!" % password)
-        return StatusResponse(ERR_INCORRECT_PASSWORD, httplib.BAD_REQUEST)
+        return PlaintextResponse(ERR_INCORRECT_PASSWORD, httplib.BAD_REQUEST)
     else:
         logging.debug("Old password %r is ok." % password)
 
     user.set_password(new)
     user.save()
     logging.debug("Password for User %r changed from %r to %r" % (username, password, new))
-    return StatusResponse()
+    return PlaintextResponse()
 
 
 
@@ -404,11 +428,11 @@ def sign_in(request, version, username):
         User.objects.get(username=username)
     except User.DoesNotExist:
         logging.debug("User %r doesn't exist!" % username)
-        return StatusResponse(ERR_UID_OR_EMAIL_AVAILABLE)
+        return PlaintextResponse(ERR_UID_OR_EMAIL_AVAILABLE)
     else:
         logging.debug("User %r exist." % username)
 
-        return StatusResponse(ERR_UID_OR_EMAIL_IN_USE, status="404")
+        return PlaintextResponse(ERR_UID_OR_EMAIL_IN_USE, status="404")
 
 
 @csrf_exempt
@@ -420,10 +444,10 @@ def register_check(request, username):
         User.objects.get(username=username)
     except User.DoesNotExist:
         logging.debug("User %r doesn't exist!" % username)
-        return StatusResponse(ERR_UID_OR_EMAIL_AVAILABLE)
+        return PlaintextResponse(ERR_UID_OR_EMAIL_AVAILABLE)
     else:
         logging.debug("User %r exist." % username)
-        return StatusResponse(ERR_UID_OR_EMAIL_IN_USE)
+        return PlaintextResponse(ERR_UID_OR_EMAIL_IN_USE)
 
 
 
@@ -439,10 +463,10 @@ def exist_user(request, version, username):
         User.objects.get(username=username)
     except User.DoesNotExist:
         logging.debug("User %r doesn't exist!" % username)
-        return StatusResponse("0")
+        return PlaintextResponse("0")
     else:
         logging.debug("User %r exist." % username)
-        return StatusResponse("1")
+        return PlaintextResponse("1")
 
 
 def captcha_html(request, version):
@@ -458,5 +482,5 @@ def captcha_html(request, version):
 @json_response(debug=True)
 def setup_user(request, version, username):
     absolute_uri = request.build_absolute_uri()
-    return {}
+    return {}, timestamp()
 

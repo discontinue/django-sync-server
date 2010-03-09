@@ -12,7 +12,8 @@ except ImportError:
 
 from django.http import HttpResponse
 
-from weave.utils import timestamp, datetime2epochtime
+# django-weave own stuff
+from utils import timestamp, datetime2epochtime
 
 
 def assert_username(debug=False):
@@ -47,14 +48,16 @@ def json_response(debug=False):
     def renderer(function):
         @wraps(function)
         def wrapper(request, *args, **kwargs):
-            data = function(request, *args, **kwargs)
+            response = function(request, *args, **kwargs)
 
-            if isinstance(data, HttpResponse):
+            if isinstance(response, HttpResponse):
                 if debug:
                     print "render debug for %r:" % function.__name__
-                    print "data: %r" % data
-                    print "response.content:", data.content
-                return data
+                    print "response: %r" % response
+                    print "response.content:", response.content
+                return response
+
+            data, modified = response
 
             if not isinstance(data, dict):
                 msg = (
@@ -68,17 +71,16 @@ def json_response(debug=False):
                 print traceback.format_exc()
                 raise
 
-            if debug:
-                content_type = 'text/plain'
-            else:
-                content_type = 'application/json'
+#            content_type = 'text/plain'
+            content_type = 'application/json'
 
             response = HttpResponse(data_string, content_type=content_type)
             # https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#X-Weave-Timestamp
-            response["X-Weave-Timestamp"] = timestamp()
+
+            response["X-Weave-Timestamp"] = "%.2f" % modified
 
             # https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#X-Weave-Alert
-            response["X-Weave-Alert"] = "render debug for %r:" % function.__name__
+#            response["X-Weave-Alert"] = "render debug for %r:" % function.__name__
 
             if debug:
                 print "render debug for %r:" % function.__name__
