@@ -5,6 +5,7 @@
     :license: GNU GPL v3 or above, see LICENSE for more details.
 """
 
+import logging
 try:
     import json # New in Python v2.6
 except ImportError:
@@ -22,6 +23,9 @@ from django_tools.middlewares import ThreadLocal
 
 # django-weave own stuff
 from utils import timestamp, datetime2epochtime
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class BaseModel(models.Model):
@@ -66,6 +70,22 @@ class Lock(BaseModel):
 
 
 
+class CollectionManager(CurrentSiteManager):
+    def get_or_create2(self, user, col_name):
+        collection, created = self.get_or_create(
+            user=user, name=col_name
+        )
+        if created:
+            logging.info("Collection %r created" % collection)
+            current_site = Site.objects.get_current()
+            collection.sites.add(current_site)
+            collection.save()
+        else:
+            logging.info("Collection %r exists" % collection)
+
+        return collection
+
+
 class Collection(BaseModel):
     """
     https://wiki.mozilla.org/Labs/Weave/Sync/1.0/Setup
@@ -80,7 +100,7 @@ class Collection(BaseModel):
     name = models.CharField(max_length=96)
 
     sites = models.ManyToManyField(Site, default=[settings.SITE_ID])
-    on_site = CurrentSiteManager('sites')
+    on_site = CollectionManager('sites')
 
     def site_info(self):
         """ for admin.ModelAdmin list_display """
@@ -90,7 +110,7 @@ class Collection(BaseModel):
     site_info.allow_tags = False
 
     def __unicode__(self):
-        return u"weave collection %r for user %r" % (self.name, self.user.username)
+        return u"%r (user %r)" % (self.name, self.user.username)
 
     class Meta:
         ordering = ("-lastupdatetime",)
@@ -134,16 +154,8 @@ class Wbo(BaseModel):
         )
     )
 
-    def get_payload_dict(self):
-        """ return json payload as dict and add modified timestamp """
-        payload = self.payload
-        lastupdatetime = self.lastupdatetime
-        payload_dict = json.loads(payload)
-        payload_dict["modified"] = self.modified
-        return payload_dict
-
     def __unicode__(self):
-        return u"weave wbo %r (%r)" % (self.wboid, self.collection)
+        return u"%r (%r)" % (self.wboid, self.collection)
 
     class Meta:
         ordering = ("-lastupdatetime",)

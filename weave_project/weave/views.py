@@ -71,6 +71,7 @@ class WeaveResponse(HttpResponse):
         if weave_timestamp is None:
             weave_timestamp = timestamp()
         self["X-Weave-Timestamp"] = "%.2f" % weave_timestamp
+#        self["X-Weave-Timestamp"] = weave_timestamp
 
 
 class PlaintextResponse(WeaveResponse):
@@ -104,6 +105,20 @@ def root_view(request):
     return {}
 
 
+def wbo_timestamp_reponse(queryset):
+    wbos = queryset.values("wboid", "modified")
+
+    newest = 0
+    timestamps = {}
+    for wbo in wbos:
+        modified = wbo["modified"]
+        if modified > newest:
+            newest = modified
+#        timestamps[wbo["wboid"]] = modified
+        timestamps[wbo["wboid"]] = "%.2f" % modified
+
+    return timestamps, newest
+
 
 #@assert_username(debug=True)
 #@check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
@@ -119,50 +134,202 @@ def info_collections(request, version, username):
 
     queryset = Wbo.objects.all()
     queryset = queryset.filter(collection__in=collection_qs)
-    wbos = queryset.values("wboid", "modified")
+    return wbo_timestamp_reponse(queryset)
 
-    newest = 0
-    timestamps = {}
-    for wbo in wbos:
-        modified = wbo["modified"]
-        if modified > newest:
-            newest = modified
-        timestamps[wbo["wboid"]] = "%.2f" % modified
 
-    return timestamps, newest
+
+
+#
+##@assert_username(debug=True)
+##@check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
+#@csrf_exempt
+#@json_response(debug=True)
+#def storage_wboid(request, version, username, wboid):
+#    """
+#    get items from storage
+#    e.g.:
+#    GET /1.0/UserName/storage/history?newer=1265189444.85&full=1&sort=index&limit=1500
+#    """
+#    current_site = Site.objects.get_current()
+#
+##    user = request.user
+#    user = User.objects.get(username=username)
+#
+#    if request.method == 'GET':
+#        return _get_storage(request, user, wboid)
+
+#    else:
+#        raise NotImplementedError("%r is not implemented" % request.method)
+
+
+def limit_wbo_queryset(request, queryset):
+    """
+    TODO:
+    predecessorid = fromform(form, "predecessorid")
+    full = fromform(form, "full")
+    """
+    GET = request.GET
+
+    ids = GET.get("ids", None)
+    if ids is not None:
+#        ids = [id.strip() for id in ids.split(",") if id.strip()] 
+        ids = ids.split(",")
+        queryset = queryset.filter(wboid__in=ids)
+
+    parentid = GET.get("parentid", None)
+    if parentid is not None:
+        queryset = queryset.filter(parentid=parentid)
+
+    newer = GET.get("newer", None)
+    if newer is not None: # Greater than or equal to newer modified timestamp
+        newer = float(newer)
+        queryset = queryset.filter(modified__gte=newer)
+
+    older = GET.get("older", None)
+    if older is not None: # Less than or equal to older modified timestamp
+        older = float(older)
+        queryset = queryset.filter(modified__lte=older)
+
+    index_above = GET.get("index_above", None)
+    if index_above is not None: # Greater than or equal to index_above modified timestamp
+        index_above = int(index_above)
+        queryset = queryset.filter(sortindex__gte=index_above)
+
+    index_below = GET.get("index_below", None)
+    if index_below is not None: # Less than or equal to index_below modified timestamp
+        index_below = int(index_below)
+        queryset = queryset.filter(sortindex__lte=index_below)
+
+    sort_type = GET.get("sort", None)
+    if sort_type is not None:
+        if sort_type == 'oldest':
+            queryset = queryset.order_by("modified")
+        elif sort_type == 'newest':
+            queryset = queryset.order_by("-modified")
+        elif sort_type == 'index':
+            queryset = queryset.order_by("wboid")
+        else:
+            raise NameError("sort type %r unknown" % sort_type)
+
+    offset = GET.get("offset", None)
+    if offset is not None:
+        offset = int(offset)
+        queryset = queryset[offset:]
+
+    limit = GET.get("limit", None)
+    if limit is not None:
+        limit = int(limit)
+        queryset = queryset[:limit]
+
+    return queryset
+
 
 
 #@assert_username(debug=True)
 #@check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
 @csrf_exempt
 @json_response(debug=True)
-def storage_wboid(request, version, username, wboid):
+def storage(request, version, username, col_name, wboid=None):
     """
-    get items from storage
-    e.g.:
-    GET /1.0/UserName/storage/history?newer=1265189444.85&full=1&sort=index&limit=1500
     """
-    current_site = Site.objects.get_current()
-
 #    user = request.user
     user = User.objects.get(username=username)
 
-    if request.method == 'POST':
+    if request.method == 'GET':
+        # Returns a list of the WBO contained in a collection.
+        try:
+            collection = Collection.on_site.get(user=user, name=col_name)
+        except Collection.DoesNotExist:
+            msg = "Collection %r for user %r not found" % (col_name, user)
+            logging.info(msg)
+            return RecordNotFoundResponse(msg)
+
+        wbo_queryset = Wbo.objects.filter(user=user)
+        wbo_queryset.filter(collection=collection)
+
+        if wboid is not None: # return one WBO
+            try:
+                wbo = wbo_queryset.get(wboid=wboid)
+            except Wbo.DoesNotExist:
+                msg = "Wbo %r not exist for collection %r" % (wboid, collection)
+                logging.info(msg)
+                return RecordNotFoundResponse(msg)
+            else:
+                response_dict = {
+                    "id": wboid,
+                    "modified": "%.2f" % wbo.modified,
+                    "payload": wbo.payload,
+                }
+                return response_dict, wbo.modified
+
+        wbo_queryset = limit_wbo_queryset(request, wbo_queryset)
+
+        # If defined, returns the full WBO, rather than just the id. 
+        full = request.GET.get("full", None)
+        if full is None: # return only the WBO ids
+            return wbo_timestamp_reponse(wbo_queryset)
+
+        newest_timestamp = 0
+        wbo_list = []
+        for wbo in wbo_queryset:
+            if wbo.modified > newest_timestamp:
+                newest_timestamp = wbo.modified
+            wbo_list.append({
+                "id": wboid,
+                "modified": wbo.modified,
+                "payload": wbo.payload,
+            })
+        logging.info("Return a wbo list with %d items." % len(wbo_list))
+        return wbo_list, newest_timestamp
+
+    elif request.method == 'PUT':
+        # https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#PUT
+        # Adds the WBO defined in the request body to the collection.
+
         payload = request.raw_post_data
         if not payload:
             # If the WBO does not contain a payload, it will only update
             # the provided metadata fields on an already defined object.
             raise NotImplemented
 
-        collection, created = Collection.on_site.get_or_create(
-            user=user, name=wboid
+        val = json.loads(payload)
+        assert val["id"] == wboid, "wrong wbo id: %r != %r" % (val["id"], wboid)
+
+        collection = Collection.on_site.get_or_create2(user, col_name)
+
+        wbo, created = Wbo.objects.get_or_create(
+            collection=collection,
+            user=user,
+            wboid=wboid,
+            defaults={
+                "parentid": val.get("parentid", None), # FIXME: must wboid + parentid be unique?
+                "sortindex": val.get("sortindex", None),
+                "modified": val.get("modified", timestamp()),
+                "payload": val["payload"],
+            }
         )
         if created:
-            logging.info("Collection %r created" % collection)
-            collection.sites.add(current_site)
-            collection.save()
+            logging.info("New wbo created: %r" % wbo)
         else:
-            logging.info("Collection %r exists" % collection)
+            wbo.parentid = val.get("parentid", None)
+            wbo.sortindex = val.get("sortindex", None)
+            wbo.modified = val.get("modified", timestamp())
+            wbo.payload = val["payload"]
+            wbo.save()
+            logging.info("Existing wbo updated: %r" % wbo)
+
+        # The server will return the timestamp associated with the modification.
+        data = {wboid: wbo.modified}
+        return data, wbo.modified
+
+    elif request.method == 'POST':
+        payload = request.raw_post_data
+        if not payload:
+            # If the WBO does not contain a payload, it will only update
+            # the provided metadata fields on an already defined object.
+            raise NotImplemented
+
+        collection = Collection.on_site.get_or_create2(user, col_name)
 
         data = json.loads(payload)
         if not isinstance(data, list):
@@ -192,105 +359,14 @@ def storage_wboid(request, version, username, wboid):
 
 #        assert val["id"] == wboid, "wrong wbo id: %r != %r" % (val["id"], wboid)
         return {}, wbo.modified
-    elif request.method == 'GET':
-        try:
-            wbo = Wbo.objects.filter(user=user).get(wboid=wboid)
-        except Wbo.DoesNotExist:
-            msg = "Wbo %r not exist for user %r" % (wboid, user)
-            logging.info(msg)
-            return RecordNotFoundResponse(msg)
-
-        payload_dict = wbo.get_payload_dict()
-        return payload_dict, wbo.modified
     elif request.method == 'DELETE':
         wbo = Wbo.objects.filter(user=user).get(wboid=wboid)
         logging.info("Delete Wbo %r for user %r" % (wboid, user))
         wbo.delete()
         return WeaveResponse()
+
     else:
-        raise NotImplementedError("%r is not implemented" % request.method)
-
-
-#@assert_username(debug=True)
-#@check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
-@csrf_exempt
-@json_response(debug=True)
-def storage(request, version, username, col_name, wboid):
-    """
-
-    """
-    current_site = Site.objects.get_current()
-
-#    user = request.user
-    user = User.objects.get(username=username)
-
-    if request.method == 'PUT':
-        # https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#PUT
-        # Adds the WBO defined in the request body to the collection.
-
-        payload = request.raw_post_data
-        if not payload:
-            # If the WBO does not contain a payload, it will only update
-            # the provided metadata fields on an already defined object.
-            raise NotImplemented
-
-        val = json.loads(payload)
-        assert val["id"] == wboid, "wrong wbo id: %r != %r" % (val["id"], wboid)
-
-        collection, created = Collection.on_site.get_or_create(
-            user=user, name=col_name
-        )
-        if created:
-            logging.info("Collection %r created" % collection)
-            collection.sites.add(current_site)
-            collection.save()
-        else:
-            logging.info("Collection %r exists" % collection)
-
-        wbo, created = Wbo.objects.get_or_create(
-            collection=collection,
-            user=user,
-            wboid=wboid,
-            defaults={
-                "parentid": val.get("parentid", None), # FIXME: must wboid + parentid be unique?
-                "sortindex": val.get("sortindex", None),
-                "modified": val.get("modified", timestamp()),
-                "payload": val["payload"],
-            }
-        )
-        if created:
-            logging.info("New wbo created: %r" % wbo)
-        else:
-            wbo.parentid = val.get("parentid", None)
-            wbo.sortindex = val.get("sortindex", None)
-            wbo.modified = val.get("modified", timestamp())
-            wbo.payload = val["payload"]
-            wbo.save()
-            logging.info("Existing wbo updated: %r" % wbo)
-
-        # The server will return the timestamp associated with the modification.
-        data = {wboid: wbo.modified}
-        return data, wbo.modified
-    elif request.method == 'GET':
-        # Returns a list of the WBO ids contained in a collection.
-        try:
-            collection = Collection.on_site.get(user=user, name=col_name)
-        except Collection.DoesNotExist:
-            msg = "Collection %r for user %r not found" % (col_name, user)
-            logging.info(msg)
-            return RecordNotFoundResponse(msg)
-
-        try:
-            wbo = Wbo.objects.all().filter(collection=collection).get(wboid=wboid)
-        except Wbo.DoesNotExist:
-            msg = "Wbo %r not exist for collection %r" % (wboid, collection)
-            logging.info(msg)
-            return RecordNotFoundResponse(msg)
-
-        payload_dict = wbo.get_payload_dict()
-        return payload_dict, wbo.modified
-    else:
-        raise NotImplemented
+        raise NotImplementedError("request.method %r not implemented!" % request.method)
 
 
 

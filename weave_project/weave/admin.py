@@ -47,7 +47,7 @@ class WboAdmin(VersionAdmin):
     list_display_links = ("wboid",)
     list_filter = ("user", "collection")
     date_hierarchy = 'lastupdatetime'
-    search_fields = ("wboid", "parentid")
+    search_fields = ("wboid", "parentid", "sortindex", "payload")
 
 admin.site.register(Wbo, WboAdmin)
 

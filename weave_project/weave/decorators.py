@@ -5,10 +5,19 @@ try:
 except ImportError:
     from django.utils.functional import wraps  # Python 2.3, 2.4 fallback.
 
+#try:
+#    import json # New in Python v2.6
+#except ImportError:
+#    from django.utils import simplejson as json
+
 try:
-    import json # New in Python v2.6
+    import json
 except ImportError:
-    from django.utils import simplejson as json
+    try:
+        import simplejson as json
+    except ImportError:
+        print "Error: json (or simplejson) module is needed"
+        sys.exit(1)
 
 from django.http import HttpResponse
 
@@ -57,27 +66,28 @@ def json_response(debug=False):
                     print "response.content:", response.content
                 return response
 
-            data, modified = response
+            data, weave_timestamp = response
 
-            if not isinstance(data, dict):
+            if not isinstance(data, (dict, list)):
                 msg = (
                     "json_response info: %s has not return a dict, has return: %r (%r)"
                 ) % (function.__name__, type(data), function.func_code)
                 raise AssertionError(msg)
 
             try:
-                data_string = json.dumps(data, sort_keys=True)
+                data_string = json.dumps(data)
             except Exception, err:
                 print traceback.format_exc()
                 raise
 
-#            content_type = 'text/plain'
-            content_type = 'application/json'
+            content_type = 'text/plain'
+#            content_type = 'application/json'
 
             response = HttpResponse(data_string, content_type=content_type)
             # https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#X-Weave-Timestamp
 
-            response["X-Weave-Timestamp"] = "%.2f" % modified
+            response["X-Weave-Timestamp"] = "%.2f" % weave_timestamp
+#            response["X-Weave-Timestamp"] = weave_timestamp
 
             # https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#X-Weave-Alert
 #            response["X-Weave-Alert"] = "render debug for %r:" % function.__name__

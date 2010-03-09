@@ -13,7 +13,7 @@ from weave import views
 
 urlpatterns = patterns('',
     url(r'^(?P<version>.*?)/(?P<username>.*?)/storage/(?P<col_name>.*?)/(?P<wboid>.*?)$', views.storage),
-    url(r'^(?P<version>.*?)/(?P<username>.*?)/storage/(?P<wboid>.*?)$', views.storage_wboid),
+    url(r'^(?P<version>.*?)/(?P<username>.*?)/storage/(?P<col_name>.*?)$', views.storage),
 
     url(r'^(?P<version>.*?)/(?P<username>.*?)/info/collections$',
         views.info_collections, name='info_collections'),
