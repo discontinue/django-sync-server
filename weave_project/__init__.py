@@ -23,8 +23,8 @@ def check_require(requirements):
             pkg_resources.require(requirement)
         except pkg_resources.VersionConflict, err:
             warnings.warn("Version conflict: %s" % err)
-#        except pkg_resources.DistributionNotFound, err:
-#            warnings.warn("Distribution not found: %s" % err)
+        except pkg_resources.DistributionNotFound, err:
+            warnings.warn("Distribution not found: %s" % err)
 
 
 requirements = (

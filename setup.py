@@ -20,12 +20,13 @@ import sys
 
 from setuptools import setup, find_packages
 
-from weave import VERSION_STRING
+from weave_project.weave import VERSION_STRING
 
+PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 def get_authors():
     authors = []
-    f = file("AUTHORS", "r")
+    f = file(os.path.join(PACKAGE_ROOT, "AUTHORS"), "r")
     for line in f:
         if line.startswith('*'):
             authors.append(line[1:].strip())
@@ -33,7 +34,7 @@ def get_authors():
     return authors
 
 def get_long_description():
-    f = file("README", "r")
+    f = file(os.path.join(PACKAGE_ROOT, "README"), "r")
     long_description = f.read()
     f.close()
     long_description.strip()
