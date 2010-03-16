@@ -90,9 +90,10 @@ class DebugMiddleware(object):
         print self.style.SQL_TABLE(request.method), self.style.SQL_FIELD(request.build_absolute_uri())
         print "request.META['CONTENT_LENGTH']: %r" % request.META['CONTENT_LENGTH']
         for k, v in sorted(request.META.iteritems()):
-            if k.startswith("HTTP_ACCEPT"):
+            upper_key = k.upper()
+            if upper_key.startswith("HTTP_ACCEPT"):
                 print k, self.style.HTTP_NOT_MODIFIED(v)
-            elif k.startswith("HTTP"):
+            elif upper_key.startswith("HTTP") or upper_key.startswith("X-"):
                 print k, v
         print "request.GET: %r" % request.GET
         print "request.POST: %s" % cut(request.POST)

@@ -128,16 +128,24 @@ def wbo_timestamp_reponse(queryset):
 @json_response(debug=True)
 def info_collections(request, version, username):
     """
-    return all collection keys with the timestamp
+    return a list of all exsiting collections with the newest wbo timestamp
     https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#GET
+    
+    e.g.: {"clients":1268646032.25,"crypto":1268149025.85,"forms":1268149016.51,"history":...}
     """
     user = User.objects.get(username=username)
 
-    collection_qs = Collection.on_site.filter(user=user)
+    collections = Collection.on_site.filter(user=user)
 
-    queryset = Wbo.objects.all()
-    queryset = queryset.filter(collection__in=collection_qs)
-    return wbo_timestamp_reponse(queryset)
+    response_dict = {}
+    for collection in collections:
+        queryset = Wbo.objects.filter(collection=collection)
+        queryset = queryset.order_by("-modified")
+        queryset = queryset.values_list("modified", flat=True)
+        newest_timestamp = queryset[0]
+        response_dict[collection.name] = newest_timestamp
+
+    return response_dict
 
 
 
@@ -270,83 +278,50 @@ def storage(request, version, username, col_name, wboid=None):
         logging.info("Return a wbo list with %d items." % len(wbo_list))
         return wbo_list, newest_timestamp
 
-    elif request.method == 'PUT':
+    elif request.method in ("POST", "PUT"):
         # https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#PUT
         # Adds the WBO defined in the request body to the collection.
-
-        payload = request.raw_post_data
-        if not payload:
+        raw_payload = request.raw_post_data
+        if not raw_payload:
             # If the WBO does not contain a payload, it will only update
             # the provided metadata fields on an already defined object.
             raise NotImplemented
 
-        val = json.loads(payload)
-        assert val["id"] == wboid, "wrong wbo id: %r != %r" % (val["id"], wboid)
-
         collection = Collection.on_site.get_or_create2(user, col_name)
 
-        wbo, created = Wbo.objects.get_or_create(
-            collection=collection,
-            user=user,
-            wboid=wboid,
-            defaults={
-                "parentid": val.get("parentid", None), # FIXME: must wboid + parentid be unique?
-                "sortindex": val.get("sortindex", None),
-                "modified": val.get("modified", timestamp()),
-                "payload": val["payload"],
-            }
-        )
-        if created:
-            logging.info("New wbo created: %r" % wbo)
+        payload = json.loads(raw_payload)
+
+        if isinstance(payload, list):
+            if request.method == "PUT":
+                logging.error("PUT request with a payload array???")
+
+            newest_timestamp = 0
+            success_list = []
+            for item in payload:
+                # TODO: Check "invalid parentid", but how?
+                wbo, created = Wbo.objects.create_or_update(item, collection, user)
+                success_list.append(wbo.wboid)
+                if wbo.modified > newest_timestamp:
+                    newest_timestamp = wbo.modified
+
+            # Returns a hash of successful and unsuccessful saves, including guidance as to possible errors: 
+            # {"modified":1233702554.25,
+            #   "success":["{GXS58IDC}12","{GXS58IDC}13","{GXS58IDC}15","{GXS58IDC}16","{GXS58IDC}18","{GXS58IDC}19"],
+            #   "failed":{"{GXS58IDC}11":["invalid parentid"],"{GXS58IDC}14":["invalid parentid"],"{GXS58IDC}17":["invalid parentid"],"{GXS58IDC}20":["invalid parentid"]}
+            # }
+            response_dict = {"modified": newest_timestamp, "success":success_list, "failed":{}}
+            return response_dict, newest_timestamp
         else:
-            wbo.parentid = val.get("parentid", None)
-            wbo.sortindex = val.get("sortindex", None)
-            wbo.modified = val.get("modified", timestamp())
-            wbo.payload = val["payload"]
-            wbo.save()
-            logging.info("Existing wbo updated: %r" % wbo)
+            if request.method == "POST":
+                logging.error("POST request without a payload array???")
 
-        # The server will return the timestamp associated with the modification.
-        data = {wboid: wbo.modified}
-        return data, wbo.modified
+            assert payload["id"] == wboid, "wrong wbo id: %r != %r" % (payload["id"], wboid)
+            wbo, created = Wbo.objects.create_or_update(payload, collection, user)
 
-    elif request.method == 'POST':
-        payload = request.raw_post_data
-        if not payload:
-            # If the WBO does not contain a payload, it will only update
-            # the provided metadata fields on an already defined object.
-            raise NotImplemented
+            # return the timestamp associated with the modification.
+            response_dict = {wboid: wbo.modified}
+            return response_dict, wbo.modified
 
-        collection = Collection.on_site.get_or_create2(user, col_name)
-
-        data = json.loads(payload)
-        if not isinstance(data, list):
-            raise NotImplemented
-
-        for item in data:
-            wbo, created = Wbo.objects.get_or_create(
-                collection=collection,
-                user=user,
-                wboid=item["id"],
-                defaults={
-                    "parentid": item.get("parentid", None), # FIXME: must wboid + parentid be unique?
-                    "sortindex": item.get("sortindex", None),
-                    "modified": item.get("modified", timestamp()),
-                    "payload": item["payload"],
-                }
-            )
-            if created:
-                logging.info("New wbo created: %r" % wbo)
-            else:
-                wbo.parentid = item.get("parentid", None)
-                wbo.sortindex = item.get("sortindex", None)
-                wbo.modified = item.get("modified", timestamp())
-                wbo.payload = item["payload"]
-                wbo.save()
-                logging.info("Existing wbo updated: %r" % wbo)
-
-#        assert val["id"] == wboid, "wrong wbo id: %r != %r" % (val["id"], wboid)
-        return {}, wbo.modified
     elif request.method == 'DELETE':
         # The DELETE method seems not to work in this way, it's documented:
         # https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#DELETE

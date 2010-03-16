@@ -116,8 +116,36 @@ class Collection(BaseModel):
         ordering = ("-lastupdatetime",)
 
 
-#class WboManager(models.Manager):
-#    def get_payload(self):
+class WboManager(models.Manager):
+    def create_or_update(self, payload_dict, collection, user):
+        """
+        create or update a wbo
+        TODO:
+            - Check parentid, but how?
+            - must wboid + parentid be unique?
+        """
+        wbo, created = Wbo.objects.get_or_create(
+            collection=collection, user=user, wboid=payload_dict["id"],
+            defaults={
+                "parentid": payload_dict.get("parentid", None),
+                "sortindex": payload_dict.get("sortindex", None),
+                "modified": payload_dict.get("modified", timestamp()),
+                "payload": payload_dict["payload"],
+            }
+        )
+        if created:
+            msg = "New wbo %r created" % wbo.wboid
+        else:
+            wbo.parentid = payload_dict.get("parentid", None)
+            wbo.sortindex = payload_dict.get("sortindex", None)
+            wbo.modified = payload_dict.get("modified", timestamp())
+            wbo.payload = payload_dict["payload"]
+            wbo.save()
+            msg = "Existing wbo %r updated" % wbo.wboid
+
+        logging.info("%s (collection: %r, user: %r)" % (msg, collection.name, user.username))
+        return wbo, created
+
 
 
 class Wbo(BaseModel):
@@ -131,7 +159,7 @@ class Wbo(BaseModel):
         createby       -> ForeignKey to user who creaded this entry
         lastupdateby   -> ForeignKey to user who has edited this entry
     """
-#    objects = WboManager()
+    objects = WboManager()
 
     collection = models.ForeignKey(Collection, blank=True, null=True)
     user = models.ForeignKey(User)

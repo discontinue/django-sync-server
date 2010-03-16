@@ -89,7 +89,9 @@ def json_response(debug=False):
     """
     A view can return tuple, list or dict:
         tupe: (item, weave timestamp) - item would be serialized
-        list/dict: the weave timestamp would be added.   
+        list/dict: the weave timestamp would be added.
+        
+    TODO: handle "X-If-Unmodified-Since" header
     """
     def renderer(function):
         @wraps(function)
