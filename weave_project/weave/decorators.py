@@ -65,23 +65,16 @@ def assert_username(debug=False):
     return _inner
 
 
-#class WeaveJSONEncoder(json.JSONEncoder):
-##    def encode(self, obj):
-##        if isinstance(obj, WeaveTimestamp):
-##            print obj
-##            return obj.to_json()
-##
-##        return super(WeaveJSONEncoder, self).encode(obj)
-#
-#    def default(self, obj):
-#        if isinstance(obj, WeaveTimestamp):
-#            return obj.to_json()
-#
-#        return super(WeaveJSONEncoder, self).default(obj)
+# monkey patch for round all floats in json response
+def float_repr(f):
+    # XXX: Is this really needed???
+    return "%.2f" % round(f, 2)
+json.encoder.FLOAT_REPR = float_repr
+
 
 def json_dumps(data, **extra):
     data_string = json.dumps(data, sort_keys=True, separators=(',', ':'), **extra)
-#    data_string = data_string.replace("/", "\\/")
+    data_string = data_string.replace("/", "\\/") # XXX: Is this really needed???
     return data_string
 
 
