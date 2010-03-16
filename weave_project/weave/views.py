@@ -94,8 +94,9 @@ def render_xml_response(template_name, context, status=httplib.OK, weave_timesta
 
 class RecordNotFoundResponse(WeaveResponse):
     status_code = 404
-    def __init__(self, content='record not found'):
+    def __init__(self, msg, content):
         HttpResponse.__init__(self)
+        self["X-Weave-Alert"] = msg
         self._container = [content]
 
 
@@ -219,9 +220,12 @@ def storage(request, version, username, col_name, wboid=None):
         try:
             collection = Collection.on_site.get(user=user, name=col_name)
         except Collection.DoesNotExist:
-            msg = "Collection %r for user %r not found" % (col_name, user)
+            msg = "Collection %r for user %r not found" % (col_name, username)
             logging.info(msg)
-            return RecordNotFoundResponse(msg)
+            if "full" in request.GET:
+                return []
+            else:
+                return RecordNotFoundResponse(msg, content="")
         logging.debug("get collection %r" % collection)
 
         wbo_queryset = Wbo.objects.filter(user=user).filter(collection=collection)
@@ -230,8 +234,9 @@ def storage(request, version, username, col_name, wboid=None):
             logging.debug("Use wboid %r to filter the queryset" % wboid)
             wbo_queryset = wbo_queryset.filter(wboid=wboid)
             if wbo_queryset.count() == 0:
-                logging.debug("no wbo found!")
-                return RecordNotFoundResponse()
+                msg = "wbo %r not found in collection %r" % (wboid, col_name)
+                logging.debug(msg)
+                return RecordNotFoundResponse(msg, content="")
             elif wbo_queryset.count() == 1:
                 wbo = wbo_queryset[0]
                 logging.debug("return only one WBO: %r" % wbo)
@@ -351,7 +356,7 @@ def storage(request, version, username, col_name, wboid=None):
             logging.info("%r is not a collection key, try to delete a wbo" % col_name)
             wboid = col_name
         else:
-            logging.info("Delete %r and all wbos in this collection for user %r" % (col_name, user))
+            logging.info("Delete %r and all wbos in this collection for user %r" % (col_name, username))
             wbo_queryset = Wbo.objects.filter(user=user).filter(collection=collection)
             wbo_queryset = limit_wbo_queryset(request, wbo_queryset)
             logging.info("Delete wbo: %r" % wbo_queryset)
@@ -363,10 +368,10 @@ def storage(request, version, username, col_name, wboid=None):
         try:
             wbo = Wbo.objects.filter(user=user).get(wboid=wboid)
         except Wbo.DoesNotExist:
-            msg = "Wbo %r not exist for user %r" % (wboid, user)
+            msg = "Wbo %r not exist in collection %r for user %r" % (wboid, col_name, username)
             logging.info(msg)
-            return RecordNotFoundResponse(msg)
-        logging.info("Delete wbo %r for user %r" % (wboid, user))
+            return RecordNotFoundResponse(msg, content="")
+        logging.info("Delete wbo %r in collection %r for user %r" % (wboid, col_name, username))
         wbo.delete()
         return WeaveResponse()
 

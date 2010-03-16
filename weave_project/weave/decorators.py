@@ -86,7 +86,11 @@ def json_dumps(data, **extra):
 
 
 def json_response(debug=False):
-    """ return a dict as a json string """
+    """
+    A view can return tuple, list or dict:
+        tupe: (item, weave timestamp) - item would be serialized
+        list/dict: the weave timestamp would be added.   
+    """
     def renderer(function):
         @wraps(function)
         def wrapper(request, *args, **kwargs):
@@ -97,12 +101,12 @@ def json_response(debug=False):
 
             if isinstance(response, tuple):
                 data, weave_timestamp = response
-            elif isinstance(response, dict):
+            elif isinstance(response, (dict, list)):
                 data = response
                 weave_timestamp = timestamp()
             else:
                 msg = (
-                    "json_response info: %s has not return tuple or dict, has return: %r (%r)"
+                    "json_response info: %s has not return tuple, dict or list, has return: %r (%r)"
                 ) % (function.__name__, type(data), function.func_code)
                 raise AssertionError(msg)
 
