@@ -11,6 +11,7 @@ import logging
 import datetime
 import traceback
 from xml.etree import cElementTree as ET
+from decimal import Decimal
 
 try:
     import json # New in Python v2.6
@@ -32,10 +33,10 @@ from django.http import HttpResponseBadRequest, HttpResponse
 from django_tools.decorators import check_permissions, render_to
 
 # django-weave own stuff
-from models import Lock, Collection, Wbo
-from forms import ChangePasswordForm
-from utils import timestamp, datetime2epochtime
-from decorators import json_response
+from weave_project.weave.models import Lock, Collection, Wbo
+from weave_project.weave.forms import ChangePasswordForm
+from weave_project.weave.utils import timestamp, datetime2epochtime, WeaveTimestamp
+from weave_project.weave.decorators import json_response
 
 
 # from http://hg.mozilla.org/labs/weave/file/tip/tools/scripts/weave_server.py#l189
@@ -70,8 +71,8 @@ class WeaveResponse(HttpResponse):
 
         if weave_timestamp is None:
             weave_timestamp = timestamp()
-        self["X-Weave-Timestamp"] = "%.2f" % weave_timestamp
-#        self["X-Weave-Timestamp"] = weave_timestamp
+#        self["X-Weave-Timestamp"] = "%.2f" % weave_timestamp
+        self["X-Weave-Timestamp"] = weave_timestamp
 
 
 class PlaintextResponse(WeaveResponse):
@@ -114,8 +115,9 @@ def wbo_timestamp_reponse(queryset):
         modified = wbo["modified"]
         if modified > newest:
             newest = modified
-#        timestamps[wbo["wboid"]] = modified
-        timestamps[wbo["wboid"]] = "%.2f" % modified
+        timestamps[wbo["wboid"]] = modified
+#        timestamps[wbo["wboid"]] = "%.2f" % modified
+#        timestamps[wbo["wboid"]] = WeaveTimestamp(modified)
 
     return timestamps, newest
 
@@ -138,30 +140,6 @@ def info_collections(request, version, username):
 
 
 
-
-#
-##@assert_username(debug=True)
-##@check_permissions(superuser_only=False, permissions=(u'weave.add_collection', u'weave.add_wbo'))
-#@csrf_exempt
-#@json_response(debug=True)
-#def storage_wboid(request, version, username, wboid):
-#    """
-#    get items from storage
-#    e.g.:
-#    GET /1.0/UserName/storage/history?newer=1265189444.85&full=1&sort=index&limit=1500
-#    """
-#    current_site = Site.objects.get_current()
-#
-##    user = request.user
-#    user = User.objects.get(username=username)
-#
-#    if request.method == 'GET':
-#        return _get_storage(request, user, wboid)
-
-#    else:
-#        raise NotImplementedError("%r is not implemented" % request.method)
-
-
 def limit_wbo_queryset(request, queryset):
     """
     TODO:
@@ -174,6 +152,7 @@ def limit_wbo_queryset(request, queryset):
     if ids is not None:
 #        ids = [id.strip() for id in ids.split(",") if id.strip()] 
         ids = ids.split(",")
+        logging.debug("limit wbo queryset with ids: %r" % ids)
         queryset = queryset.filter(wboid__in=ids)
 
     parentid = GET.get("parentid", None)
@@ -230,8 +209,8 @@ def limit_wbo_queryset(request, queryset):
 @csrf_exempt
 @json_response(debug=True)
 def storage(request, version, username, col_name, wboid=None):
-    """
-    """
+    """ Get/add/remove items from weave storage. """
+
 #    user = request.user
     user = User.objects.get(username=username)
 
@@ -243,31 +222,35 @@ def storage(request, version, username, col_name, wboid=None):
             msg = "Collection %r for user %r not found" % (col_name, user)
             logging.info(msg)
             return RecordNotFoundResponse(msg)
+        logging.debug("get collection %r" % collection)
 
-        wbo_queryset = Wbo.objects.filter(user=user)
-        wbo_queryset.filter(collection=collection)
+        wbo_queryset = Wbo.objects.filter(user=user).filter(collection=collection)
 
         if wboid is not None: # return one WBO
-            try:
-                wbo = wbo_queryset.get(wboid=wboid)
-            except Wbo.DoesNotExist:
-                msg = "Wbo %r not exist for collection %r" % (wboid, collection)
-                logging.info(msg)
-                return RecordNotFoundResponse(msg)
-            else:
+            logging.debug("Use wboid %r to filter the queryset" % wboid)
+            wbo_queryset = wbo_queryset.filter(wboid=wboid)
+            if wbo_queryset.count() == 0:
+                logging.debug("no wbo found!")
+                return RecordNotFoundResponse()
+            elif wbo_queryset.count() == 1:
+                wbo = wbo_queryset[0]
+                logging.debug("return only one WBO: %r" % wbo)
                 response_dict = {
-                    "id": wboid,
-                    "modified": "%.2f" % wbo.modified,
+                    "id": wbo.wboid,
+#                    "modified": "%.2f" % wbo.modified,
+                    "modified": wbo.modified,
                     "payload": wbo.payload,
                 }
                 return response_dict, wbo.modified
+            logging.debug("more than one wbo found: queryset count: %r" % wbo_queryset.count())
+        else:
+            wbo_queryset = limit_wbo_queryset(request, wbo_queryset)
 
-        wbo_queryset = limit_wbo_queryset(request, wbo_queryset)
-
-        # If defined, returns the full WBO, rather than just the id. 
-        full = request.GET.get("full", None)
-        if full is None: # return only the WBO ids
-            return wbo_timestamp_reponse(wbo_queryset)
+            # If defined, returns the full WBO, rather than just the id. 
+            full = request.GET.get("full", None)
+            if full is None:
+                logging.debug("GET parameter 'full' not set -> return only the WBO ids")
+                return wbo_timestamp_reponse(wbo_queryset)
 
         newest_timestamp = 0
         wbo_list = []
@@ -275,7 +258,7 @@ def storage(request, version, username, col_name, wboid=None):
             if wbo.modified > newest_timestamp:
                 newest_timestamp = wbo.modified
             wbo_list.append({
-                "id": wboid,
+                "id": wbo.wboid,
                 "modified": wbo.modified,
                 "payload": wbo.payload,
             })
@@ -360,8 +343,30 @@ def storage(request, version, username, col_name, wboid=None):
 #        assert val["id"] == wboid, "wrong wbo id: %r != %r" % (val["id"], wboid)
         return {}, wbo.modified
     elif request.method == 'DELETE':
-        wbo = Wbo.objects.filter(user=user).get(wboid=wboid)
-        logging.info("Delete Wbo %r for user %r" % (wboid, user))
+        # The DELETE method seems not to work in this way, it's documented:
+        # https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#DELETE
+        try:
+            collection = Collection.on_site.get(user=user, name=col_name)
+        except Collection.DoesNotExist:
+            logging.info("%r is not a collection key, try to delete a wbo" % col_name)
+            wboid = col_name
+        else:
+            logging.info("Delete %r and all wbos in this collection for user %r" % (col_name, user))
+            wbo_queryset = Wbo.objects.filter(user=user).filter(collection=collection)
+            wbo_queryset = limit_wbo_queryset(request, wbo_queryset)
+            logging.info("Delete wbo: %r" % wbo_queryset)
+            wbo_queryset.delete()
+            logging.info("Delete Collection: %r" % collection)
+            collection.delete()
+            return WeaveResponse()
+
+        try:
+            wbo = Wbo.objects.filter(user=user).get(wboid=wboid)
+        except Wbo.DoesNotExist:
+            msg = "Wbo %r not exist for user %r" % (wboid, user)
+            logging.info(msg)
+            return RecordNotFoundResponse(msg)
+        logging.info("Delete wbo %r for user %r" % (wboid, user))
         wbo.delete()
         return WeaveResponse()
 

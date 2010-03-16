@@ -12,9 +12,9 @@ from django.contrib.redirects.models import Redirect
 from django.core.management.color import color_style
 from django.core import urlresolvers
 
+from weave_project.weave.utils import cut
 
 
-MAX = 120
 STACK_LIMIT = 60
 
 SKIP_URLS = (
@@ -23,13 +23,6 @@ SKIP_URLS = (
 # Activate only debug, if this string is in the url, debug every request, if None:
 #DEBUG_ONLY = "pubkey"
 DEBUG_ONLY = None
-
-
-def cut(s):
-    s = repr(s)
-    if len(s) > MAX:
-        return s[:MAX] + "..."
-    return s
 
 
 #def print_stack_info():
