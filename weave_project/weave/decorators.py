@@ -66,15 +66,15 @@ def assert_username(debug=False):
 
 
 # monkey patch for round all floats in json response
-def float_repr(f):
-    # XXX: Is this really needed???
-    return "%.2f" % round(f, 2)
-json.encoder.FLOAT_REPR = float_repr
+#def float_repr(f):
+#    # XXX: Is this really needed???
+#    return "%.2f" % round(f, 2)
+#json.encoder.FLOAT_REPR = float_repr
 
 
 def json_dumps(data, **extra):
     data_string = json.dumps(data, sort_keys=True, separators=(',', ':'), **extra)
-    data_string = data_string.replace("/", "\\/") # XXX: Is this really needed???
+#    data_string = data_string.replace("/", "\\/") # XXX: Is this really needed???
     return data_string
 
 

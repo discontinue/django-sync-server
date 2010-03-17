@@ -236,26 +236,22 @@ def storage(request, version, username, col_name, wboid=None):
                 return RecordNotFoundResponse(msg, content="")
         logging.debug("get collection %r" % collection)
 
-        wbo_queryset = Wbo.objects.filter(user=user).filter(collection=collection)
+        wbo_queryset = Wbo.objects.all().filter(user=user).filter(collection=collection)
 
         if wboid is not None: # return one WBO
             logging.debug("Use wboid %r to filter the queryset" % wboid)
             wbo_queryset = wbo_queryset.filter(wboid=wboid)
-            if wbo_queryset.count() == 0:
+            qs_count = wbo_queryset.count()
+            if qs_count == 0:
                 msg = "wbo %r not found in collection %r" % (wboid, col_name)
                 logging.debug(msg)
                 return RecordNotFoundResponse(msg, content="")
-            elif wbo_queryset.count() == 1:
+            elif qs_count == 1:
                 wbo = wbo_queryset[0]
                 logging.debug("return only one WBO: %r" % wbo)
-                response_dict = {
-                    "id": wbo.wboid,
-#                    "modified": "%.2f" % wbo.modified,
-                    "modified": wbo.modified,
-                    "payload": wbo.payload,
-                }
+                response_dict = wbo.get_response_dict()
                 return response_dict, wbo.modified
-            logging.debug("more than one wbo found: queryset count: %r" % wbo_queryset.count())
+            logging.debug("more than one wbo found: queryset count: %r" % qs_count)
         else:
             wbo_queryset = limit_wbo_queryset(request, wbo_queryset)
 
@@ -270,11 +266,8 @@ def storage(request, version, username, col_name, wboid=None):
         for wbo in wbo_queryset:
             if wbo.modified > newest_timestamp:
                 newest_timestamp = wbo.modified
-            wbo_list.append({
-                "id": wbo.wboid,
-                "modified": wbo.modified,
-                "payload": wbo.payload,
-            })
+            response_dict = wbo.get_response_dict()
+            wbo_list.append(response_dict)
         logging.info("Return a wbo list with %d items." % len(wbo_list))
         return wbo_list, newest_timestamp
 

@@ -43,11 +43,11 @@ class WboAdmin(VersionAdmin):
     payload_cutout.short_description = "Payload cutout"
 #    view_on_site_link.allow_tags = True
 
-    list_display = ("id", "lastupdatetime", "modified", "user", "wboid", "parentid", "sortindex", "lastupdateby", "payload_cutout")
+    list_display = ("id", "lastupdatetime", "modified", "user", "wboid", "parentid", "predecessorid", "sortindex", "lastupdateby", "payload_cutout")
     list_display_links = ("wboid",)
-    list_filter = ("user", "collection")
+    list_filter = ("user", "collection", "predecessorid", "parentid")
     date_hierarchy = 'lastupdatetime'
-    search_fields = ("wboid", "parentid", "sortindex", "payload")
+    search_fields = ("wboid", "parentid", "predecessorid", "sortindex", "payload")
 
 admin.site.register(Wbo, WboAdmin)
 

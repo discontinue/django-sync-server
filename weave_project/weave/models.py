@@ -128,6 +128,7 @@ class WboManager(models.Manager):
             collection=collection, user=user, wboid=payload_dict["id"],
             defaults={
                 "parentid": payload_dict.get("parentid", None),
+                "predecessorid": payload_dict.get("predecessorid", None),
                 "sortindex": payload_dict.get("sortindex", None),
                 "modified": payload_dict.get("modified", timestamp()),
                 "payload": payload_dict["payload"],
@@ -137,6 +138,7 @@ class WboManager(models.Manager):
             msg = "New wbo %r created" % wbo.wboid
         else:
             wbo.parentid = payload_dict.get("parentid", None)
+            wbo.predecessorid = payload_dict.get("predecessorid", None)
             wbo.sortindex = payload_dict.get("sortindex", None)
             wbo.modified = payload_dict.get("modified", timestamp())
             wbo.payload = payload_dict["payload"]
@@ -169,6 +171,9 @@ class Wbo(BaseModel):
     parentid = models.CharField(max_length=64, blank=True, null=True,
         help_text="wbo parent identifying string"
     )
+    predecessorid = models.CharField(max_length=64, blank=True, null=True,
+        help_text="wbo predecessorid"
+    )
     sortindex = models.IntegerField(null=True, blank=True,
         help_text="An integer indicting the relative importance of this item in the collection.",
     )
@@ -181,6 +186,17 @@ class Wbo(BaseModel):
             " specify a record for decryption."
         )
     )
+    def get_response_dict(self):
+        response_dict = {
+            "id": self.wboid,
+            "modified": self.modified,
+            "payload": self.payload,
+        }
+        for key in ("parentid", "predecessorid", "sortindex"):
+            value = getattr(self, key)
+            if value:
+                response_dict[key] = value
+        return response_dict
 
     def __unicode__(self):
         return u"%r (%r)" % (self.wboid, self.collection)
