@@ -1,16 +1,23 @@
+# coding:uft-8
+
 '''
-Decorators for view functions inside weave.
-HTTP basic auth decorators taken from:
-http://www.djangosnippets.org/snippets/243/
+    Decorators for view functions inside weave.
+    HTTP basic auth decorators taken from:
+    http://www.djangosnippets.org/snippets/243/
 
+    Info:
+    ~~~~~
+    to debug the output in a browser: add "?debug=1" to a url.
+    To reformat the payload: add "?debug=2" to a url.
+    (This works only if settings.DEBUG==True)
 
-Created on 15.03.2010
-
-@license: GNU GPL v3 or above, see LICENSE for more details.
-@copyright: 2010 see AUTHORS for more details.
-@author: Jens Diemer
-@author: Scanner (http://www.djangosnippets.org/users/Scanner/)
-@author: Michael Fladischer <michael@fladi.at>
+    Created on 15.03.2010
+    
+    @license: GNU GPL v3 or above, see LICENSE for more details.
+    @copyright: 2010 see AUTHORS for more details.
+    @author: Jens Diemer
+    @author: Scanner (http://www.djangosnippets.org/users/Scanner/)
+    @author: Michael Fladischer <michael@fladi.at>
 '''
 
 import logging
@@ -21,19 +28,20 @@ try:
     from functools import wraps
 except ImportError:
     from django.utils.functional import wraps # Python 2.3, 2.4 fallback.
-    
+
 try:
     import json # New in Python v2.6
 except ImportError:
     from django.utils import simplejson as json
 
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
 
 from weave.utils import weave_timestamp
 
-def view_or_basicauth(view, request, test_func, realm = "", *args, **kwargs):
+def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
     """
     This is a helper function used by both 'logged_in_or_basicauth' and
     'has_perm_or_basicauth' that does the nitty of determining if they
@@ -66,8 +74,8 @@ def view_or_basicauth(view, request, test_func, realm = "", *args, **kwargs):
     response.status_code = 401
     response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
     return response
-    
-def logged_in_or_basicauth(func, realm = None):
+
+def logged_in_or_basicauth(func, realm=None):
     """
     A simple decorator that requires a user to be logged in. If they are not
     logged in the request is examined for a 'authorization' header.
@@ -103,7 +111,7 @@ def logged_in_or_basicauth(func, realm = None):
                                  realm, *args, **kwargs)
     return wrapper
 
-def has_perm_or_basicauth(func, perm, realm = ""):
+def has_perm_or_basicauth(func, perm, realm=""):
     """
     This is similar to the above decorator 'logged_in_or_basicauth'
     except that it requires the logged in user to have a specific
@@ -158,15 +166,36 @@ def weave_render_response(func):
     @wraps(func)
     def wrapper(request, *args, **kwargs):
         timedata = datetime.now()
-        content=func(request, timestamp=timedata, *args, **kwargs)
-        response=HttpResponse()
-        if request.META['HTTP_ACCEPT'] == 'application/newlines' and isinstance(content, list):
-            response.content='\n'.join([json.dumps(element) for element in content]) + '\n'
-            response.content_type='application/newlines'
-            response['X-Weave-Records'] = len(content)
+        data = func(request, timestamp=timedata, *args, **kwargs)
+        response = HttpResponse()
+
+        if settings.DEBUG and "debug" in request.GET:
+            logging.debug("debug output for %r:" % func.__name__)
+
+            if int(request.GET["debug"]) > 1:
+                def load_payload(item):
+                    if "payload" in item:
+                        raw_payload = item["payload"]
+                        payload_dict = json.loads(raw_payload)
+                        item["payload"] = payload_dict
+                    return item
+
+                if isinstance(data, list):
+                    data = [load_payload(item) for item in data]
+                else:
+                    data = load_payload(data)
+
+            response.content_type = "text/plain"
+            response.content = json.dumps(data, indent=4)
         else:
-            response.content=json.dumps(content)
-          
+            if request.META['HTTP_ACCEPT'] == 'application/newlines' and isinstance(data, list):
+                response.content = '\n'.join([json.dumps(element) for element in data]) + '\n'
+                response.content_type = 'application/newlines'
+                response['X-Weave-Records'] = len(data)
+            else:
+                response.content_type = "application/json"
+                response.content = json.dumps(data)
+
         response["X-Weave-Timestamp"] = weave_timestamp(timedata)
         return response
     return wrapper
