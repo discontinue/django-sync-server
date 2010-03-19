@@ -1,13 +1,13 @@
+# coding:utf-8
+
 '''
-User handling for Weave.
-FIXME: Not complete yet.
-
-Created on 15.03.2010
-
-@license: GNU GPL v3 or above, see LICENSE for more details.
-@copyright: 2010 see AUTHORS for more details.
-@author: Jens Diemer
-@author: FladischerMichael
+    User handling for Weave.
+    FIXME: Not complete yet.
+    
+    Created on 15.03.2010
+    
+    @license: GNU GPL v3 or above, see LICENSE for more details.
+    @copyleft: 2010 by the django-weave team, see AUTHORS for more details.
 '''
 
 import logging
@@ -15,7 +15,7 @@ import httplib
 
 from django.contrib.auth.models import User
 from django.contrib.csrf.middleware import csrf_exempt
-from django.http import HttpResponseBadRequest, HttpResponse,\
+from django.http import HttpResponseBadRequest, HttpResponse, \
     HttpResponseNotFound
 
 # django-weave own stuff
@@ -23,7 +23,9 @@ from weave import constants
 from weave.forms import ChangePasswordForm
 from weave.utils import weave_timestamp
 
-logging.basicConfig(level=logging.DEBUG)
+
+#logging.basicConfig(level=logging.DEBUG)
+
 
 @csrf_exempt
 def chpwd(request):
@@ -64,6 +66,7 @@ def chpwd(request):
     logging.debug("Password for User %r changed from %r to %r" % (username, password, new))
     return HttpResponse()
 
+
 @csrf_exempt
 def node(request, version, username):
     """
@@ -81,6 +84,7 @@ def node(request, version, username):
         #FIXME: Send the actual cluster URL instead of 404
         return HttpResponseNotFound(constants.ERR_UID_OR_EMAIL_IN_USE)
 
+
 @csrf_exempt
 def register_check(request, username):
     """
@@ -94,6 +98,7 @@ def register_check(request, username):
     else:
         logging.debug("User %r exist." % username)
         return HttpResponse(constants.ERR_UID_OR_EMAIL_IN_USE)
+
 
 @csrf_exempt
 def exists(request, version, username):
@@ -112,7 +117,11 @@ def exists(request, version, username):
         logging.debug("User %r exist." % username)
         return HttpResponse("1")
 
+
 def captcha_html(request, version):
+    """
+    TODO
+    """
     print "_" * 79
     print "captcha_html:"
 #    raise Http404
@@ -120,6 +129,7 @@ def captcha_html(request, version):
     response = HttpResponse("not supported")
     response["X-Weave-Timestamp"] = weave_timestamp()
     return response
+
 
 def setup_user(request, version, username):
     absolute_uri = request.build_absolute_uri()

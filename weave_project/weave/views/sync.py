@@ -1,12 +1,12 @@
+# coding: utf-8
+
 '''
-Storage for Weave.
-
-Created on 15.03.2010
-
-@license: GNU GPL v3 or above, see LICENSE for more details.
-@copyright: 2010 see AUTHORS for more details.
-@author: Jens Diemer
-@author: FladischerMichael
+    Storage for Weave.
+    
+    Created on 15.03.2010
+    
+    @license: GNU GPL v3 or above, see LICENSE for more details.
+    @copyleft: 2010 by the django-weave team, see AUTHORS for more details.
 '''
 
 import logging
@@ -21,12 +21,15 @@ from django.contrib.csrf.middleware import csrf_exempt
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 
+# django-weave own stuff
 from weave.models import Collection, Wbo
 from weave.utils import limit_wbo_queryset, weave_timestamp
-from weave.decorators import weave_assert_username, logged_in_or_basicauth,\
+from weave.decorators import weave_assert_username, logged_in_or_basicauth, \
   weave_render_response
 
-logging.basicConfig(level=logging.DEBUG)
+
+#logging.basicConfig(level=logging.DEBUG)
+
 
 @logged_in_or_basicauth
 @weave_assert_username
@@ -39,8 +42,9 @@ def info(request, version, username, timestamp):
     """
     collections = dict()
     for collection in Collection.on_site.filter(user=request.user):
-        collections[collection.name] = weave_timestamp(collection.modified) 
+        collections[collection.name] = weave_timestamp(collection.modified)
     return collections
+
 
 @logged_in_or_basicauth
 @weave_assert_username
@@ -50,19 +54,19 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
     """
     Handle storing Collections and WBOs. 
     """
-    if request.META.has_key('X-If-Unmodified-Since'): 
-        since=datetime.fromtimestamp(float(request.META['X-If-Unmodified-Since']))
+    if request.META.has_key('X-If-Unmodified-Since'):
+        since = datetime.fromtimestamp(float(request.META['X-If-Unmodified-Since']))
     else:
-        since=None
-    
+        since = None
+
     if request.method == 'GET':
         # Returns a list of the WBO contained in a collection.
         collection = get_object_or_404(Collection.on_site, user=request.user, name=col_name)
-        
+
         if wboid is not None: # return one WBO
             wbo = get_object_or_404(Wbo, user=request.user, collection=collection, wboid=wboid)
             return wbo.get_response_dict()
-        
+
         wbo_queryset = Wbo.objects.filter(user=request.user, collection=collection)
         wbo_queryset = limit_wbo_queryset(request, wbo_queryset)
 
@@ -88,12 +92,12 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
 
         # TODO: I don't think that it's good to just pass 0 in case the header is not defined
         collection, created = Collection.on_site.create_or_update(
-                                                                  request.user, 
-                                                                  col_name, 
-                                                                  timestamp, 
+                                                                  request.user,
+                                                                  col_name,
+                                                                  timestamp,
                                                                   since,
                                                                   )
-        
+
         if created:
             logging.debug("Created new collection %s" % collection)
         else:
@@ -117,19 +121,19 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
 
         # TODO: I don't think that it's good to just pass 0 in case the header is not defined
         collection, created = Collection.on_site.create_or_update(
-                                                                  request.user, 
-                                                                  col_name, 
-                                                                  timestamp, 
+                                                                  request.user,
+                                                                  col_name,
+                                                                  timestamp,
                                                                   since,
                                                                   )
-        
+
         if created:
             logging.debug("Create new collection %s" % collection)
         else:
             logging.debug("Found existing collection %s" % collection)
-        
+
         data = json.loads(payload)
-        
+
         if not isinstance(data, list):
             raise NotImplementedError
 
@@ -149,7 +153,7 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
             assert request.META.has_key('X-Confirm-Delete'), "To remove all records for your user, please make sure to include a X-Confirm-Delete HTTP header in your DELTE request!"
             Collection.on_site.filter(user=request.user).delete()
             return weave_timestamp(timestamp)
-            
+
         if col_name is not None and wboid is not None:
             wbo = get_object_or_404(Wbo, user=request.user, collection__name=col_name, wboid=wboid)
             logging.info("Delete Wbo %s in collection %s for user %s" % (wbo.wboid, col_name, request.user))
@@ -162,6 +166,6 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
             else:
                 get_object_or_404(Collection.on_site, user=request.user, name=col_name).delete()
         return weave_timestamp(timestamp)
-        
+
     else:
         raise NotImplementedError("request.method %r not implemented!" % request.method)
