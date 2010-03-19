@@ -1,32 +1,24 @@
-# coding: utf-8
+'''
+URL mapping.
 
-"""
-    :copyleft: 2010 by the django-weave team, see AUTHORS for more details.
-    :license: GNU GPL v3 or above, see LICENSE for more details.
-"""
+Created on 15.03.2010
 
+@license: GNU GPL v3 or above, see LICENSE for more details.
+@copyright: 2010 see AUTHORS for more details.
+@author: Jens Diemer
+@author: FladischerMichael
+'''
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls.defaults import patterns
 
-from weave import views
-
-
-urlpatterns = patterns('',
-    url(r'^(?P<version>.*?)/(?P<username>.*?)/storage/(?P<col_name>.*?)/(?P<wboid>.*?)$', views.storage),
-    url(r'^(?P<version>.*?)/(?P<username>.*?)/storage/(?P<col_name>.*?)$', views.storage),
-
-    url(r'^(?P<version>.*?)/(?P<username>.*?)/info/collections$',
-        views.info_collections, name='info_collections'),
-
-    url(r'^misc/(?P<version>.*?)/captcha_html$', views.captcha_html, name='captcha_html'),
-
-    url(r'^user/(?P<version>.*?)/(?P<username>.*?)/node/weave$', views.sign_in, name='sign_in'),
-    url(r'^user/(?P<version>.*?)/(?P<username>.*?)$', views.exist_user, name='exist_user'),
-
-    url(r'^user/(?P<username>.*?)/(?P<lock_path>.*?)$', views.handle_lock, name='handle_lock'),
-
-    url(r'^api/register/chpwd/$', views.chpwd, name='chpwd'),
-    url(r'^api/register/check/(?P<username>.*?)$', views.register_check, name='register_check'),
-
-    url(r'^', views.root_view, name='root_view'),
+urlpatterns = patterns('weave',
+    (r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/storage/(?P<col_name>.*?)/(?P<wboid>.*?)$', 'views.sync.storage'),
+    (r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/storage/(?P<col_name>.*?)$', 'views.sync.storage'),
+    (r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/storage$', 'views.sync.storage'),
+    (r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/info/collections$', 'views.sync.info'),
+    (r'^misc/(?P<version>[\d\.]+?)/captcha_html$', 'views.user.captcha_html'),
+    (r'^user/(?P<version>[\d\.]+?)/(?P<username>.*?)/node/weave$', 'views.user.node'),
+    (r'^user/(?P<version>[\d\.]+?)/(?P<username>.*?)$', 'views.user.exists'),
+    (r'^api/register/chpwd/$', 'views.user.chpwd'),
+    (r'^api/register/check/(?P<username>.*?)$', 'views.user.register_check'),
 )

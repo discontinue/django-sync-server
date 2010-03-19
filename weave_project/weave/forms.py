@@ -1,3 +1,11 @@
+'''
+Forms used by weave.
+FIXME: Not complete yet.
+
+@license: GNU GPL v3 or above, see LICENSE for more details.
+@copyright: 2010 see AUTHORS for more details.
+@author: Jens Diemer
+'''
 
 from django import forms
 

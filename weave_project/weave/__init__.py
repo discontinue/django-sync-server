@@ -1,16 +1,4 @@
-# coding: utf-8
-
-
-
-
-__version__ = (0, 0, 1, 'pre-alpha')
-
-# for setuptools
-# - Only use . as a separator
-# - No spaces: (0, 1, 0, 'beta') -> "0.1.0beta"
-# http://peak.telecommunity.com/DevCenter/setuptools#specifying-your-project-s-version
-VERSION_STRING = "%s.%s.%s%s" % __version__
-
-
-
-
+__version__ = (0, 1, 1)
+__api__ = (1,0)
+VERSION_STRING = '.'.join(str(integer) for integer in __version__)
+API_STRING = '.'.join(str(integer) for integer in __version__)

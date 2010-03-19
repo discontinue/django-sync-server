@@ -1,46 +1,76 @@
-# coding: utf-8
+'''
+Utility functions for Weave API.
+
+Created on 15.03.2010
+
+@license: GNU GPL v3 or above, see LICENSE for more details.
+@copyright: 2010 see AUTHORS for more details.
+@author: Jens Diemer
+@author: FladischerMichael
+'''
 
 import time
-import datetime
+from datetime import datetime
 
-MAX = 120
+def weave_timestamp(timedata=None):
+    if timedata is None:
+        timedata = datetime.now()
+    return time.mktime(timedata.timetuple())
 
-def timestamp():
-    # Weave rounds to 2 digits and so must we, otherwise rounding errors will
-    # influence the "newer" and "older" modifiers
-    return round(time.time(), 2)
+def limit_wbo_queryset(request, queryset):
+    """
+    TODO:
+    predecessorid = fromform(form, "predecessorid")
+    full = fromform(form, "full")
+    """
+    GET = request.GET
 
+    ids = GET.get("ids", None)
+    if ids is not None:
+        ids = ids.split(",")
+        queryset = queryset.filter(wboid__in=ids)
 
-def datetime2epochtime(dt):
-    assert isinstance(dt, datetime.datetime)
-    timestamp = time.mktime(dt.timetuple()) # datetime -> time since the epoch
-    # Add microseconds. FIXME: Is there a easier way?
-    timestamp += (dt.microsecond / 1000000.0)
-#    print "round: %r" % timestamp,
-    timestamp = round(timestamp, 2)
-#    print "to %r" % timestamp
-    return timestamp
+    parentid = GET.get("parentid", None)
+    if parentid is not None:
+        queryset = queryset.filter(parentid=parentid)
 
+    newer = GET.get("newer", None)
+    if newer is not None: # Greater than or equal to newer modified timestamp
+        queryset = queryset.filter(modified__gte=datetime.fromtimestamp(float(newer)))
 
-def cut(s, max=None):
-    if max is None:
-        max = MAX
-    s = repr(s)
-    if len(s) > max:
-        return s[:max] + "..."
-    return s
+    older = GET.get("older", None)
+    if older is not None: # Less than or equal to older modified timestamp
+        queryset = queryset.filter(modified__lte=datetime.fromtimestamp(float(older)))
 
-class WeaveTimestamp(object):
-    def __init__(self, timestamp):
-        assert isinstance(timestamp, float)
-        self.timestamp = timestamp
+    index_above = GET.get("index_above", None)
+    if index_above is not None: # Greater than or equal to index_above modified timestamp
+        queryset = queryset.filter(sortindex__gte=int(index_above))
 
-    def to_json(self):
-        print self.timestamp
-        r = round(self.timestamp, 2)
-        print r
-        return r
+    index_below = GET.get("index_below", None)
+    if index_below is not None: # Less than or equal to index_below modified timestamp
+        queryset = queryset.filter(sortindex__lte=int(index_below))
 
-    def __repr__(self):
-        return u"<WeaveTimestamp %r>" % self.timestamp
+    sort_type = GET.get("sort", None)
+    if sort_type is not None:
+        if sort_type == 'oldest':
+            queryset = queryset.order_by("modified")
+        elif sort_type == 'newest':
+            queryset = queryset.order_by("-modified")
+        elif sort_type == 'index':
+            queryset = queryset.order_by("wboid")
+        else:
+            raise NameError("sort type %r unknown" % sort_type)
 
+    offset = GET.get("offset", None)
+    if offset is not None:
+        queryset = queryset[int(offset):]
+
+    limit = GET.get("limit", None)
+    if limit is not None:
+        queryset = queryset[:int(limit)]
+
+    return queryset
+
+def collection_modified_since(collection, timestamp):
+    return datetime.fromtimestamp(timestamp) < collection.lastupdatetime
+        
