@@ -168,6 +168,7 @@ def weave_render_response(func):
         timedata = datetime.now()
         data = func(request, timestamp=timedata, *args, **kwargs)
         response = HttpResponse()
+        response["X-Weave-Timestamp"] = weave_timestamp(timedata)
 
         if settings.DEBUG and "debug" in request.GET:
             logging.debug("debug output for %r:" % func.__name__)
@@ -196,6 +197,5 @@ def weave_render_response(func):
                 response["content-type"] = "application/json"
                 response.content = json.dumps(data)
 
-        response["X-Weave-Timestamp"] = weave_timestamp(timedata)
         return response
     return wrapper
