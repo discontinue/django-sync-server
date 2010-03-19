@@ -9,7 +9,6 @@
     @copyleft: 2010 by the django-weave team, see AUTHORS for more details.
 '''
 
-import logging
 from datetime import datetime
 
 try:
@@ -26,10 +25,9 @@ from weave.models import Collection, Wbo
 from weave.utils import limit_wbo_queryset, weave_timestamp
 from weave.decorators import weave_assert_username, logged_in_or_basicauth, \
   weave_render_response
+from weave.config import _WeaveConfig
 
-
-#logging.basicConfig(level=logging.DEBUG)
-
+logger = _WeaveConfig.get_logger()
 
 @logged_in_or_basicauth
 @weave_assert_username
@@ -81,7 +79,7 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
         # Adds the WBO defined in the request body to the collection.
 
         payload = request.raw_post_data
-        logging.debug("Payload for PUT: %s" % payload)
+        logger.debug("Payload for PUT: %s" % payload)
         if not payload:
             raise NotImplementedError
 
@@ -99,23 +97,23 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
                                                                   )
 
         if created:
-            logging.debug("Created new collection %s" % collection)
+            logger.debug("Created new collection %s" % collection)
         else:
-            logging.debug("Found existing collection %s" % collection)
+            logger.debug("Found existing collection %s" % collection)
 
         wbo, created = Wbo.objects.create_or_update(val, collection, request.user, timestamp)
 
         if created:
-            logging.debug("New wbo created: %r" % wbo)
+            logger.debug("New wbo created: %r" % wbo)
         else:
-            logging.debug("Existing wbo updated: %r" % wbo)
+            logger.debug("Existing wbo updated: %r" % wbo)
 
         return weave_timestamp(timestamp)
 
     elif request.method == 'POST':
         status = {'success': [], 'failed': []}
         payload = request.raw_post_data
-        logging.debug("Payload in POST: %s" % payload)
+        logger.debug("Payload in POST: %s" % payload)
         if not payload:
             raise NotImplementedError
 
@@ -128,9 +126,9 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
                                                                   )
 
         if created:
-            logging.debug("Create new collection %s" % collection)
+            logger.debug("Create new collection %s" % collection)
         else:
-            logging.debug("Found existing collection %s" % collection)
+            logger.debug("Found existing collection %s" % collection)
 
         data = json.loads(payload)
 
@@ -142,9 +140,9 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
             status['success'].append(wbo.wboid)
 
             if created:
-                logging.debug("New wbo created: %s" % wbo)
+                logger.debug("New wbo created: %s" % wbo)
             else:
-                logging.debug("Existing wbo updated: %s" % wbo)
+                logger.debug("Existing wbo updated: %s" % wbo)
 
         return status
     elif request.method == 'DELETE':
@@ -156,7 +154,7 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
 
         if col_name is not None and wboid is not None:
             wbo = get_object_or_404(Wbo, user=request.user, collection__name=col_name, wboid=wboid)
-            logging.info("Delete Wbo %s in collection %s for user %s" % (wbo.wboid, col_name, request.user))
+            logger.info("Delete Wbo %s in collection %s for user %s" % (wbo.wboid, col_name, request.user))
             wbo.delete()
         else:
             ids = request.GET.get('ids', None)

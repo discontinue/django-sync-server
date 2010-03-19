@@ -20,7 +20,6 @@
     @author: Michael Fladischer <michael@fladi.at>
 '''
 
-import logging
 import base64
 from datetime import datetime
 
@@ -40,6 +39,9 @@ from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
 
 from weave.utils import weave_timestamp
+from weave.config import _WeaveConfig
+
+logger = _WeaveConfig.get_logger()
 
 def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
     """
@@ -148,7 +150,7 @@ def weave_assert_username(func, key='username'):
     def wrapper(request, *args, **kwargs):
         # Test if username argument matches logged in user.
         if request.user.username != kwargs[key]:
-            logging.debug("Logged in user %s does not match %s from URL." % (request.user.username, kwargs[key]))
+            logger.debug("Logged in user %s does not match %s from URL." % (request.user.username, kwargs[key]))
             raise PermissionDenied("Wrong user!")
         return func(request, *args, **kwargs)
     return wrapper
@@ -171,7 +173,7 @@ def weave_render_response(func):
         response["X-Weave-Timestamp"] = weave_timestamp(timedata)
 
         if settings.DEBUG and "debug" in request.GET:
-            logging.debug("debug output for %r:" % func.__name__)
+            logger.debug("debug output for %r:" % func.__name__)
 
             if int(request.GET["debug"]) > 1:
                 def load_payload(item):
