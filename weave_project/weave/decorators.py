@@ -185,15 +185,15 @@ def weave_render_response(func):
                 else:
                     data = load_payload(data)
 
-            response.content_type = "text/plain"
+            response["content-type"] = "text/plain"
             response.content = json.dumps(data, indent=4)
         else:
             if request.META['HTTP_ACCEPT'] == 'application/newlines' and isinstance(data, list):
                 response.content = '\n'.join([json.dumps(element) for element in data]) + '\n'
-                response.content_type = 'application/newlines'
+                response["content-type"] = 'application/newlines'
                 response['X-Weave-Records'] = len(data)
             else:
-                response.content_type = "application/json"
+                response["content-type"] = "application/json"
                 response.content = json.dumps(data)
 
         response["X-Weave-Timestamp"] = weave_timestamp(timedata)
