@@ -32,10 +32,10 @@ requirements = (
     "django >= 1.2-beta-1",
 
     # http://code.google.com/p/django-tools/source/browse/trunk/django_tools/__init__.py
-    "django-tools >= 0.7.0beta",
+#    "django-tools >= 0.7.0beta",
 
     # http://code.google.com/p/django-reversion/source/browse/trunk/src/setup.py
-    "django-reversion >= 1.1.2",
+#    "django-reversion >= 1.1.2",
 )
 
 check_require(requirements)

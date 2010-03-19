@@ -49,6 +49,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+# Should be set in local_settings.py
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
@@ -103,7 +104,7 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
-    'weave.middlewares.debug.DebugMiddleware',
+#    'weave.middlewares.debug.DebugMiddleware',
 
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -113,7 +114,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.transaction.TransactionMiddleware',
 
     'django_tools.middlewares.ThreadLocal.ThreadLocalMiddleware',
-    'reversion.middleware.RevisionMiddleware',
+#    'reversion.middleware.RevisionMiddleware',
 )
 
 ROOT_URLCONF = 'weave_project.urls'
@@ -124,8 +125,8 @@ TEMPLATE_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
 
-    os.path.join(os.path.abspath(os.path.dirname(weave.__file__)), "templates"),
-    os.path.normpath(os.path.join(WEAVE_PROJECT_ROOT, "../../reversion/reversion/templates")),
+#    os.path.join(os.path.abspath(os.path.dirname(weave.__file__)), "templates"),
+#    os.path.normpath(os.path.join(WEAVE_PROJECT_ROOT, "../../reversion/reversion/templates")),
     os.path.join(os.path.abspath(os.path.dirname(django.__file__)), "contrib/admin/templates"),
 )
 
@@ -142,7 +143,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
 
-    'reversion',
+#    'reversion',
     "weave",
 )
 
