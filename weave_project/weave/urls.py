@@ -11,7 +11,8 @@ Created on 15.03.2010
 
 from django.conf.urls.defaults import patterns
 
-from weave_project.weave.views import sync, user
+from weave.views import sync, user
+
 
 urlpatterns = patterns('weave',
     (r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/storage/(?P<col_name>.*?)/(?P<wboid>.*?)$', sync.storage),
