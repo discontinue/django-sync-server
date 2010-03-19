@@ -1,4 +1,4 @@
-# coding:uft-8
+# coding:utf-8
 
 '''
     Decorators for view functions inside weave.
