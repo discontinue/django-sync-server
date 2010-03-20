@@ -39,9 +39,9 @@ from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
 
 from weave.utils import weave_timestamp
-from weave.config import _WeaveConfig
+from weave import Logging
 
-logger = _WeaveConfig.get_logger()
+logger = Logging.get_logger()
 
 def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
     """
@@ -149,9 +149,10 @@ def weave_assert_username(func, key='username'):
     @wraps(func)
     def wrapper(request, *args, **kwargs):
         # Test if username argument matches logged in user.
+        # Weave uses lowercase usernames inside the URL!!!
         if request.user.username != kwargs[key]:
             logger.debug("Logged in user %s does not match %s from URL." % (request.user.username, kwargs[key]))
-            raise PermissionDenied("Wrong user!")
+            raise PermissionDenied("Username from HTTP authentication does not match URL!")
         return func(request, *args, **kwargs)
     return wrapper
 

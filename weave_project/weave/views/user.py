@@ -21,9 +21,9 @@ from django.http import HttpResponseBadRequest, HttpResponse, \
 from weave import constants
 from weave.forms import ChangePasswordForm
 from weave.utils import weave_timestamp
-from weave.config import _WeaveConfig
+from weave import Logging
 
-logger = _WeaveConfig.get_logger()
+logger = Logging.get_logger()
 
 @csrf_exempt
 def chpwd(request):

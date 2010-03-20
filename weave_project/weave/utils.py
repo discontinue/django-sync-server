@@ -11,7 +11,7 @@ Created on 15.03.2010
 
 import time
 from datetime import datetime
-
+    
 def weave_timestamp(timedata=None):
     if timedata is None:
         timedata = datetime.now()
@@ -70,7 +70,4 @@ def limit_wbo_queryset(request, queryset):
         queryset = queryset[:int(limit)]
 
     return queryset
-
-def collection_modified_since(collection, timestamp):
-    return datetime.fromtimestamp(timestamp) < collection.lastupdatetime
         

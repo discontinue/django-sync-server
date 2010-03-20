@@ -25,9 +25,9 @@ from weave.models import Collection, Wbo
 from weave.utils import limit_wbo_queryset, weave_timestamp
 from weave.decorators import weave_assert_username, logged_in_or_basicauth, \
   weave_render_response
-from weave.config import _WeaveConfig
+from weave import Logging
 
-logger = _WeaveConfig.get_logger()
+logger = Logging.get_logger()
 
 @logged_in_or_basicauth
 @weave_assert_username
@@ -52,7 +52,7 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
     """
     Handle storing Collections and WBOs. 
     """
-    if request.META.has_key('X-If-Unmodified-Since'):
+    if 'X-If-Unmodified-Since' in request.META:
         since = datetime.fromtimestamp(float(request.META['X-If-Unmodified-Since']))
     else:
         since = None
