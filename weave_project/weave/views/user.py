@@ -101,7 +101,7 @@ def register_check(request, username):
 @csrf_exempt
 def exists(request, version, username):
     """
-    https://wiki.mozilla.org/Labs/Weave/User/1.0/API
+    https://wiki.mozilla.org/Labs/Weave/User/1.0/API#GET
     Returns 1 if the username is in use, 0 if it is available.
     
     e.g.: https://auth.services.mozilla.com/user/1/UserName
@@ -116,20 +116,10 @@ def exists(request, version, username):
         return HttpResponse("1")
 
 
+@csrf_exempt
 def captcha_html(request, version):
-    """
-    TODO
-    """
-    print "_" * 79
-    print "captcha_html:"
-#    raise Http404
-    #response = HttpResponse("11", status=400, content_type='application/json')
-    response = HttpResponse("not supported")
-    response["X-Weave-Timestamp"] = weave_timestamp()
-    return response
+    """ TODO """
+    logger.error("captcha is not implemented, yet.")
+    raise NotImplemented()
 
-# FIXME: What the intention of this view?
-def setup_user(request, version, username):
-    absolute_uri = request.build_absolute_uri()
-    return {}, weave_timestamp()
 

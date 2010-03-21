@@ -53,11 +53,11 @@ setup(
     include_package_data=True, # include package data under svn source control
     zip_safe=False,
     classifiers=[
-        "Development Status :: 1 - Planning",
-        "Development Status :: 2 - Pre-Alpha",
+#        "Development Status :: 1 - Planning",
+#        "Development Status :: 2 - Pre-Alpha",
 #        "Development Status :: 3 - Alpha",
-#        "Development Status :: 4 - Beta",
-#        "Development Status :: 5 - Production/Stable",
+        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
         "Intended Audience :: Developers",
 #        "Intended Audience :: Education",

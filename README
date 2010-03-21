@@ -1,23 +1,40 @@
-
 =============
  description
 =============
 
-django-weave is a Django reusable application witch implements a Firefox weave server.
+django-weave is a firefox weave server.
+It's written in Python using the Django Framework.
 
-=============
- requirement
-=============
+More information on our homepage!
 
-:django-tools:
-  http://code.google.com/p/django-tools/
+What is weave?
 
-:django-reversion:
-  http://code.google.com/p/django-reversion/
+Weave Browser Sync is a free browser add-on from Mozilla Labs that keeps your
+bookmarks, saved passwords, browsing history and open tabs backed up and
+synchronized, with end-to-end encryption for your privacy and security.  
+
+====================
+ django-weave links
+====================
+
+:homepage:
+  http://code.google.com/p/django-weave/
+
+:SVN:
+ http://django-weave.googlecode.com/svn/trunk/
 
 =========
  history
 =========
+
+- v0.1.2
+  
+  - many code cleanup and bugfixes
+  - remove django-tools and django-reversion decencies
+
+- v0.1.0pre-alpha
+
+  - sync works
 
 - v0.0.1
 
@@ -30,21 +47,8 @@ django-weave is a Django reusable application witch implements a Firefox weave s
 :Weave homepage:
   https://wiki.mozilla.org/Labs/Weave
 
-:reference implementation for a Weave server:
-  http://hg.mozilla.org/labs/weave/file/tip/tools/scripts/weave_server.py
-
-:Weave server test script:
-  http://hg.mozilla.org/labs/weave/file/tip/tools/scripts/weave_server_tester.py
-
-====================
- django-weave links
-====================
-
-:homepage:
-  http://code.google.com/p/django-weave/
-
-:SVN:
- http://django-weave.googlecode.com/svn/trunk/
+:more links here:
+  http://code.google.com/p/django-weave/wiki/WeaveLinks
 
 
 *(Readme text $Rev$)*
