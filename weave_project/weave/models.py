@@ -21,28 +21,29 @@ from django.contrib.sites.managers import CurrentSiteManager
 
 from weave.utils import weave_timestamp
 
+
 class BaseModel(models.Model):
     modified = models.DateTimeField(auto_now=True, help_text="Time of the last change.")
 
     class Meta:
         abstract = True
-        
+
+
 class CollectionManager(CurrentSiteManager):
     def create_or_update(self, user, col_name, timestamp, since=None):
         collection, created = super(CollectionManager, self).get_or_create(
-            user=user, 
-            name=col_name,
+            user=user, name=col_name,
         )
-        if created:
-            collection.sites.add(Site.objects.get_current())
-        else:
-            # See if we have a constraint on the last modified date  
-            if since is not None:
-                if since < collection.modified:
-                    raise ValidationError
-        collection.modified=timestamp
+
+        # See if we have a constraint on the last modified date  
+        if since is not None:
+            if since < collection.modified:
+                raise ValidationError
+
+        collection.modified = timestamp
         collection.save()
         return collection, created
+
 
 class Collection(BaseModel):
     """
@@ -53,17 +54,12 @@ class Collection(BaseModel):
     """
     user = models.ForeignKey(User)
     name = models.CharField(max_length=96)
-    sites = models.ManyToManyField(Site, default=[settings.SITE_ID])
-    on_site = CollectionManager('sites')
-    def site_info(self):
-        """ for admin.ModelAdmin list_display """
-        sites = self.sites.all()
-        return ", ".join([site.name for site in sites])
-    site_info.short_description = 'Exists on site'
-    site_info.allow_tags = False
+
+    site = models.ForeignKey(Site, editable=False, default=settings.SITE_ID)
+    on_site = CollectionManager('site')
 
     def __unicode__(self):
-        return "%s" % self.name
+        return u"%r (user: %r, site: %r)" % (self.name, self.user.username, self.site)
 
     class Meta:
         ordering = ("-modified",)
@@ -78,8 +74,8 @@ class WboManager(models.Manager):
             - must wboid + parentid be unique?
         """
         wbo, created = Wbo.objects.get_or_create(
-            collection=collection, 
-            user=user, 
+            collection=collection,
+            user=user,
             wboid=payload_dict['id'],
             defaults={
                 'parentid': payload_dict.get('parentid', None),
@@ -99,6 +95,7 @@ class WboManager(models.Manager):
 
         return wbo, created
 
+
 class Wbo(BaseModel):
     """
     https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API   
@@ -110,16 +107,16 @@ class Wbo(BaseModel):
     objects = WboManager()
     collection = models.ForeignKey(Collection, blank=True, null=True)
     user = models.ForeignKey(User)
-    wboid = models.CharField(max_length=64, 
+    wboid = models.CharField(max_length=64,
         help_text="wbo identifying string"
     )
-    parentid = models.CharField(max_length=64, blank=True, null=True, 
+    parentid = models.CharField(max_length=64, blank=True, null=True,
         help_text="wbo parent identifying string"
     )
     predecessorid = models.CharField(max_length=64, blank=True, null=True,
         help_text="wbo predecessorid"
     )
-    sortindex = models.IntegerField(blank=True,  null=True,
+    sortindex = models.IntegerField(blank=True, null=True,
         help_text="An integer indicting the relative importance of this item in the collection."
     )
     payload = models.TextField(blank=True,
@@ -130,7 +127,7 @@ class Wbo(BaseModel):
             " specify a record for decryption."
         )
     )
-    
+
     def get_response_dict(self):
         response_dict = {
             "id": self.wboid,
@@ -146,7 +143,7 @@ class Wbo(BaseModel):
         return response_dict
 
     def __unicode__(self):
-        return "%s" % self.wboid
+        return u"%r (%r)" % (self.wboid, self.collection)
 
     class Meta:
         ordering = ("-modified",)

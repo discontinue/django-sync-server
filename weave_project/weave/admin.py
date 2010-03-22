@@ -33,7 +33,7 @@ class WboAdmin(VersionAdmin):
 admin.site.register(Wbo, WboAdmin)
 
 class CollectionAdmin(VersionAdmin):
-    list_display = ['id', 'name', 'user', 'modified', 'site_info']
+    list_display = ['id', 'name', 'user', 'modified', 'site']
     list_filter = ['user']
     date_hierarchy = 'modified'
     inlines = [WboAdminInline]
