@@ -10,14 +10,15 @@ Created on 15.03.2010
 '''
 
 from django.contrib import admin
-from reversion.admin import VersionAdmin
+# TODO: Find a way to incorporate django-reversion
+#from reversion.admin import VersionAdmin
 
 from weave.models import Wbo, Collection
 
 class WboAdminInline(admin.TabularInline):
     model = Wbo
 
-class WboAdmin(VersionAdmin):
+class WboAdmin(admin.ModelAdmin):
     def payload_cutout(self, obj):
         MAX = 100
         payload = obj.payload
@@ -32,7 +33,7 @@ class WboAdmin(VersionAdmin):
 
 admin.site.register(Wbo, WboAdmin)
 
-class CollectionAdmin(VersionAdmin):
+class CollectionAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'user', 'modified', 'site']
     list_filter = ['user']
     date_hierarchy = 'modified'
