@@ -1,9 +1,24 @@
+# coding:utf-8
+
+
+import os
 import logging
 
-__version__ = (0, 1, 2)
+
+try:
+    from django.utils.version import get_svn_revision
+except ImportError:
+    svn_revision = ""
+else:
+    path = os.path.split(os.path.abspath(__file__))[0]
+    svn_revision = get_svn_revision(path)
+
+
+__version__ = (0, 1, 3, svn_revision)
 __api__ = (1, 0)
-VERSION_STRING = '.'.join(str(integer) for integer in __version__)
-API_STRING = '.'.join(str(integer) for integer in __version__)
+
+VERSION_STRING = "%i.%i.%i %s" % __version__
+API_STRING = '.'.join(str(integer) for integer in __api__)
 
 
 class Logging(object):

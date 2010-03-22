@@ -113,7 +113,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
 
-    'django_tools.middlewares.ThreadLocal.ThreadLocalMiddleware',
+#    'django_tools.middlewares.ThreadLocal.ThreadLocalMiddleware',
 #    'reversion.middleware.RevisionMiddleware',
 )
 
@@ -126,7 +126,7 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 
 #    os.path.join(os.path.abspath(os.path.dirname(weave.__file__)), "templates"),
-    os.path.normpath(os.path.join(WEAVE_PROJECT_ROOT, "../../reversion/reversion/templates")),
+#    os.path.normpath(os.path.join(WEAVE_PROJECT_ROOT, "../../reversion/reversion/templates")),
     os.path.join(os.path.abspath(os.path.dirname(django.__file__)), "contrib/admin/templates"),
 )
 
@@ -143,7 +143,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
 
-    'reversion',
+#    'reversion',
     "weave",
 )
 

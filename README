@@ -27,6 +27,11 @@ synchronized, with end-to-end encryption for your privacy and security.
  history
 =========
 
+- v0.1.3
+
+  - Remove dependency on django-reversion
+  - change Collection sites ManyToManyField to a normal ForeignKey
+
 - v0.1.2
   
   - many code cleanup and bugfixes
