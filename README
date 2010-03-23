@@ -2,8 +2,7 @@
  description
 =============
 
-django-weave is a firefox weave server.
-It's written in Python using the Django Framework.
+django-weave is a reusable application which implements a Mozilla Labs Weave server for Django.
 
 More information on our homepage!
 
