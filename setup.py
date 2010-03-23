@@ -40,7 +40,6 @@ def get_long_description():
     long_description.strip()
     return long_description
 
-
 setup(
     name='django-weave',
     version=VERSION_STRING,
@@ -48,6 +47,7 @@ setup(
     long_description=get_long_description(),
     author=get_authors(),
     maintainer="Jens Diemer",
+    maintainer_email="django-weave@jensdiemer.de",
     url='http://code.google.com/p/django-weave/',
     packages=find_packages(),
     include_package_data=True, # include package data under svn source control
