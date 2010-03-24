@@ -1,4 +1,3 @@
-
 """
     Check some external libs with pkg_resources.require()
     We only create warnings on VersionConflict and DistributionNotFound exceptions.
@@ -26,10 +25,9 @@ def check_require(requirements):
         except pkg_resources.DistributionNotFound, err:
             warnings.warn("Distribution not found: %s" % err)
 
-
 requirements = (
     # http://code.djangoproject.com/browser/django/trunk/django/__init__.py
-    "django >= 1.2-beta-1",
+    "django >= 1.1",
 
     # http://code.google.com/p/django-tools/source/browse/trunk/django_tools/__init__.py
 #    "django-tools >= 0.7.0beta",
