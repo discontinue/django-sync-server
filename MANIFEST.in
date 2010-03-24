@@ -1,1 +1,2 @@
 include AUTHORS
+recursive-include testproject *
