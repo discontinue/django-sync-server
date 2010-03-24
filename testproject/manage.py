@@ -13,8 +13,9 @@
 import os
 import sys
 
-# Maybe we should not set this inside because it will override anything defined at the shell.
-os.environ['DJANGO_SETTINGS_MODULE'] = "testproject.settings"
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE'] = "testproject.settings"
+    print "DJANGO_SETTINGS_MODULE not set, use: %r" % os.environ['DJANGO_SETTINGS_MODULE']
 
 def _error(msg):
     print "Import Error:", msg
