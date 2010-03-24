@@ -9,6 +9,9 @@ function verbose_eval {
     echo
 }
 
+export PYTHONPATH="src/django-weave/:${PYTHONPATH}"
+export DJANGO_SETTINGS_MODULE=testproject.settings
+
 activate_file="./bin/activate"
 
 echo _____________________________________________________________________
@@ -23,10 +26,6 @@ else
     verbose_eval source $activate_file
     
     echo _____________________________________________________________________
-    echo Go into source folder:
-    verbose_eval cd src/django-weave/weave_project/
-    
-    echo _____________________________________________________________________
     echo execute manage.py
-    verbose_eval python manage.py $*
+    verbose_eval python src/django-weave/testproject/manage.py $*
 fi

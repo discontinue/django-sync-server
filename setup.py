@@ -20,7 +20,7 @@ import sys
 
 from setuptools import setup, find_packages
 
-from weave_project.weave import VERSION_STRING
+from weave import VERSION_STRING
 
 PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -49,7 +49,7 @@ setup(
     maintainer="Jens Diemer",
     maintainer_email="django-weave@jensdiemer.de",
     url='http://code.google.com/p/django-weave/',
-    packages=find_packages(),
+    packages=find_packages(exclude=['testproject', 'testproject.*']),
     include_package_data=True, # include package data under svn source control
     zip_safe=False,
     classifiers=[

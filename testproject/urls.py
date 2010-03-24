@@ -9,7 +9,7 @@ handler404 = 'django.views.defaults.page_not_found'
 handler500 = 'django.views.defaults.server_error'
 
 urlpatterns = patterns('',
-    url(r'^weave_project/', include('weave_project.weave.urls')),
+    url(r'^weave/', include('weave.urls')),
 
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^admin/', include(admin.site.urls)),
