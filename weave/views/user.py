@@ -36,13 +36,16 @@ def password(request):
     # If for example django-auth-ldap is used for authentication it will set the password for 
     # User objects to a unusable one in the database. Therefor we cannot change it, it has to 
     # happen inside LDAP.
-    if request.user.has_usable_password():
-        request.user.set_password(request.raw_post_data)
-        request.user.save()
-        logger.debug("Password for User %r changed to %r" % (request.user.username, request.raw_post_data))
-        return HttpResponse()
-    else:
+    # On the other hand, the PHP server for Weave uses the first 2048 (if there is enough data)
+    # characters from POST data as the new password. We decided to throw an error if the password 
+    # data is longer than 256 characters.
+    if not request.user.has_usable_password() or len(request.raw_post_data) > 256:
         return HttpResponseBadRequest()
+    request.user.set_password(request.raw_post_data)
+    request.user.save()
+    logger.debug("Password for User %r changed to %r" % (request.user.username, request.raw_post_data))
+    return HttpResponse()
+        
 
 @csrf_exempt
 def node(request, version, username):
