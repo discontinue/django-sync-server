@@ -21,7 +21,7 @@ urlpatterns = patterns('weave',
     (r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/info/collections$', sync.info),
     (r'^misc/(?P<version>[\d\.]+?)/captcha_html$', user.captcha_html),
     (r'^user/(?P<version>[\d\.]+?)/(?P<username>.*?)/node/weave$', user.node),
+    (r'^user/(?P<version>[\d\.]+?)/(?P<username>.*?)/password$', user.password),
     (r'^user/(?P<version>[\d\.]+?)/(?P<username>.*?)$', user.exists),
-    (r'^api/register/chpwd/$', user.chpwd),
     (r'^api/register/check/(?P<username>.*?)$', user.register_check),
 )

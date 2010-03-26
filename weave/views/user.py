@@ -10,8 +10,6 @@
     @copyleft: 2010 by the django-weave team, see AUTHORS for more details.
 '''
 
-import httplib
-
 from django.contrib.auth.models import User
 from django.contrib.csrf.middleware import csrf_exempt
 from django.http import HttpResponseBadRequest, HttpResponse, \
@@ -19,51 +17,32 @@ from django.http import HttpResponseBadRequest, HttpResponse, \
 
 # django-weave own stuff
 from weave import constants
-from weave.forms import ChangePasswordForm
-from weave.utils import weave_timestamp
+from weave.decorators import logged_in_or_basicauth
 from weave import Logging
 
 logger = Logging.get_logger()
 
+@logged_in_or_basicauth
 @csrf_exempt
-def chpwd(request):
+def password(request):
     """
     Change the user password.
     """
     if request.method != 'POST':
         logger.error("wrong request method %r" % request.method)
         return HttpResponseBadRequest()
-
-    form = ChangePasswordForm(request.POST)
-    if not form.is_valid():
-        # TODO
-        print "*** Form error:"
-        print form.errors
-        constants.ERR_MISSING_UID
-        constants.ERR_MISSING_PASSWORD
-        raise #FIXME return HttpResponseBadRequest(status=)
-
-    username = form.cleaned_data["uid"]
-    password = form.cleaned_data["password"] # the old password
-    new = form.cleaned_data["new"] # the new password
-
-    try:
-        user = User.objects.get(username=username)
-    except User.DoesNotExist:
-        logger.debug("User %r doesn't exist!" % username)
-        return HttpResponse(constants.ERR_INVALID_UID)
-
-    if user.check_password(password) != True:
-        logger.debug("Old password %r is wrong!" % password)
-        return HttpResponse(constants.ERR_INCORRECT_PASSWORD, httplib.BAD_REQUEST)
+    
+    # Make sure that we are able to change the password. 
+    # If for example django-auth-ldap is used for authentication it will set the password for 
+    # User objects to a unusable one in the database. Therefor we cannot change it, it has to 
+    # happen inside LDAP.
+    if request.user.has_usable_password():
+        request.user.set_password(request.raw_post_data)
+        request.user.save()
+        logger.debug("Password for User %r changed to %r" % (request.user.username, request.raw_post_data))
+        return HttpResponse()
     else:
-        logger.debug("Old password %r is ok." % password)
-
-    user.set_password(new)
-    user.save()
-    logger.debug("Password for User %r changed from %r to %r" % (username, password, new))
-    return HttpResponse()
-
+        return HttpResponseBadRequest()
 
 @csrf_exempt
 def node(request, version, username):
@@ -76,7 +55,7 @@ def node(request, version, username):
         User.objects.get(username=username)
     except User.DoesNotExist:
         logger.debug("User %r doesn't exist!" % username)
-        return HttpResponse(constants.ERR_UID_OR_EMAIL_AVAILABLE, status="404")
+        return HttpResponseNotFound(constants.ERR_UID_OR_EMAIL_AVAILABLE)
     else:
         logger.debug("User %r exist." % username)
         #FIXME: Send the actual cluster URL instead of 404
