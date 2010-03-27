@@ -9,7 +9,13 @@
     @license: GNU GPL v3 or above, see LICENSE for more details.
     @copyleft: 2010 by the django-weave team, see AUTHORS for more details.
 '''
+try:
+    import json # New in Python v2.6
+except ImportError:
+    from django.utils import simplejson as json
+from recaptcha.client.captcha import submit
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.csrf.middleware import csrf_exempt
 from django.http import HttpResponseBadRequest, HttpResponse, \
@@ -34,7 +40,7 @@ def password(request):
     
     # Make sure that we are able to change the password. 
     # If for example django-auth-ldap is used for authentication it will set the password for 
-    # User objects to a unusable one in the database. Therefor we cannot change it, it has to 
+    # User objects to a unusable one in the database. Therefore we cannot change it, it has to 
     # happen inside LDAP.
     # On the other hand, the PHP server for Weave uses the first 2048 (if there is enough data)
     # characters from POST data as the new password. We decided to throw an error if the password 
@@ -88,20 +94,32 @@ def exists(request, version, username):
     
     e.g.: https://auth.services.mozilla.com/user/1/UserName
     """
-    try:
-        User.objects.get(username=username)
-    except User.DoesNotExist:
-        logger.debug("User %r doesn't exist!" % username)
-        return HttpResponse("0")
+    if request.method == 'GET':
+        try:
+            User.objects.get(username=username)
+        except User.DoesNotExist:
+            logger.debug("User %r doesn't exist!" % username)
+            return HttpResponse("0")
+        else:
+            logger.debug("User %r exist." % username)
+            return HttpResponse("1")
+    elif request.method == 'PUT':
+        # Handle user creation.
+        data = json.loads(request.raw_post_data)
+        # Usernames are limited to a length of max. 30 chars.
+        # http://docs.djangoproject.com/en/dev/topics/auth/#django.contrib.auth.models.User.username
+        if len(username) > 30 or len(data['password']) > 256:
+            return HttpResponseBadRequest()
+        result = submit(
+                        data['captcha-challenge'], 
+                        data['captcha-response'], 
+                        settings.RECAPTCHA_PRIVATE_KEY, 
+                        request.META['REMOTE_ADDR']
+                        )
+        if not result.is_valid:
+            # Captcha failed.
+            return HttpResponseBadRequest()
+        User.objects.create_user(username, data['email'], data['password'])
+        return HttpResponse()
     else:
-        logger.debug("User %r exist." % username)
-        return HttpResponse("1")
-
-
-@csrf_exempt
-def captcha_html(request, version):
-    """ TODO """
-    logger.error("captcha is not implemented, yet.")
-    raise NotImplemented()
-
-
+        raise NotImplemented()

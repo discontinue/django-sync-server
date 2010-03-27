@@ -45,12 +45,8 @@ ADMINS = ()
 
 MANAGERS = ADMINS
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(PROJECT_ROOT, 'test.db3'),
-    }
-}
+DATABASE_ENGINE = 'sqlite3'
+DATABASE_NAME = os.path.join(PROJECT_ROOT, 'test.db3')
 
 TIME_ZONE = "UTC"
 
@@ -69,16 +65,15 @@ ADMIN_MEDIA_PREFIX = '/media/'
 SECRET_KEY = "Make this unique, and don't share it with anybody!"
 
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
+    'django.template.loaders.filesystem.load_template_source',
+    'django.template.loaders.app_directories.load_template_source',
 )
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.csrf.middleware.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
 )
 
@@ -94,8 +89,11 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'django.contrib.messages',
     'django.contrib.admin',
     'django.contrib.admindocs',
     "weave",
 )
+
+# Must be obtained from http://recaptcha.net/ by registering an account.
+RECAPTCHA_PUBLIC_KEY = '' 
+RECAPTCHA_PRIVATE_KEY = ''
