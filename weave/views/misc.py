@@ -27,7 +27,7 @@ def captcha(request, version):
     except ImportError:
         logger.error("Captcha requested but unable to import the 'recaptcha' package!")
         return HttpResponse("Captcha support disabled due to missing Python package 'recaptcha'.")
-    if not "RECAPTCHA_PUBLIC_KEY" in settings:
+    if not getattr(settings, "RECAPTCHA_PUBLIC_KEY"):
         logger.error("Trying to create user but settings.RECAPTCHA_PUBLIC_KEY not set")
         raise ImproperlyConfigured
     # Send a simple HTML to the client. It get's rendered inside the Weave client.
