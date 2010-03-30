@@ -43,7 +43,7 @@ def password(request):
     # User objects to a unusable one in the database. Therefore we cannot change it, it has to 
     # happen inside LDAP.
     if not request.user.has_usable_password():
-        logger.debug("Can't change password. User %s has a unusable password." % user.username)
+        logger.debug("Can't change password. User %s has a unusable password." % request.user.username)
         return HttpResponseBadRequest()
 
     # The PHP server for Weave uses the first 2048 (if there is enough data) characters
@@ -53,7 +53,7 @@ def password(request):
         msg = (
             "Don't change password for user %s."
             " POST data has more than 256 characters! (len=%i)"
-        ) % (user.username, len(request.raw_post_data))
+        ) % (request.user.username, len(request.raw_post_data))
         logger.debug(msg)
         return HttpResponseBadRequest()
 
