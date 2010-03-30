@@ -13,9 +13,9 @@ try:
     import json # New in Python v2.6
 except ImportError:
     from django.utils import simplejson as json
-from recaptcha.client.captcha import submit
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth.models import User
 from django.contrib.csrf.middleware import csrf_exempt
 from django.http import HttpResponseBadRequest, HttpResponse, \
@@ -114,6 +114,16 @@ def exists(request, version, username):
             logger.debug("User %r exist." % username)
             return HttpResponse("1")
     elif request.method == 'PUT':
+        # Check for aviability of recaptcha 
+        # (can be found at: http://pypi.python.org/pypi/recaptcha-client)
+        try:
+            from recaptcha.client.captcha import submit
+        except ImportError:
+            logger.error("Captcha requested but unable to import the 'recaptcha' package!")
+            return HttpResponse("Captcha support disabled due to missing Python package 'recaptcha'.")
+        if not "RECAPTCHA_PRIVATE_KEY" in settings:
+            logger.error("Trying to create user but settings.RECAPTCHA_PRIVATE_KEY not set")
+            raise ImproperlyConfigured
         # Handle user creation.
         data = json.loads(request.raw_post_data)
         # Usernames are limited to a length of max. 30 chars.

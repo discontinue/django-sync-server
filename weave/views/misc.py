@@ -8,9 +8,8 @@ Created on 27.03.2010
 '''
 # Due to Mozilla Weave supporting Recaptcha solely, we have to stick with it until
 # they decide to change the interface to pluggable captchas.
-from recaptcha.client.captcha import displayhtml
-
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.contrib.csrf.middleware import csrf_exempt
 from django.http import HttpResponse
 
@@ -21,6 +20,16 @@ logger = Logging.get_logger()
 
 @csrf_exempt
 def captcha(request, version):
+    # Check for aviability of recaptcha 
+    # (can be found at: http://pypi.python.org/pypi/recaptcha-client)
+    try:
+        from recaptcha.client.captcha import displayhtml
+    except ImportError:
+        logger.error("Captcha requested but unable to import the 'recaptcha' package!")
+        return HttpResponse("Captcha support disabled due to missing Python package 'recaptcha'.")
+    if not "RECAPTCHA_PUBLIC_KEY" in settings:
+        logger.error("Trying to create user but settings.RECAPTCHA_PUBLIC_KEY not set")
+        raise ImproperlyConfigured
     # Send a simple HTML to the client. It get's rendered inside the Weave client.
     return HttpResponse("<html><body>%s</body></html>" % displayhtml(settings.RECAPTCHA_PUBLIC_KEY))
     
