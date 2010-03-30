@@ -37,21 +37,31 @@ def password(request):
     if request.method != 'POST':
         logger.error("wrong request method %r" % request.method)
         return HttpResponseBadRequest()
-    
+
     # Make sure that we are able to change the password. 
     # If for example django-auth-ldap is used for authentication it will set the password for 
     # User objects to a unusable one in the database. Therefore we cannot change it, it has to 
     # happen inside LDAP.
-    # On the other hand, the PHP server for Weave uses the first 2048 (if there is enough data)
-    # characters from POST data as the new password. We decided to throw an error if the password 
-    # data is longer than 256 characters.
-    if not request.user.has_usable_password() or len(request.raw_post_data) > 256:
+    if not request.user.has_usable_password():
+        logger.debug("Can't change password. User %s has a unusable password." % user.username)
         return HttpResponseBadRequest()
+
+    # The PHP server for Weave uses the first 2048 (if there is enough data) characters
+    # from POST data as the new password. We decided to throw an error if the password 
+    # data is longer than 256 characters.
+    if len(request.raw_post_data) > 256:
+        msg = (
+            "Don't change password for user %s."
+            " POST data has more than 256 characters! (len=%i)"
+        ) % (user.username, len(request.raw_post_data))
+        logger.debug(msg)
+        return HttpResponseBadRequest()
+
     request.user.set_password(request.raw_post_data)
     request.user.save()
     logger.debug("Password for User %r changed to %r" % (request.user.username, request.raw_post_data))
     return HttpResponse()
-        
+
 
 @csrf_exempt
 def node(request, version, username):
@@ -111,9 +121,9 @@ def exists(request, version, username):
         if len(username) > 30 or len(data['password']) > 256:
             return HttpResponseBadRequest()
         result = submit(
-                        data['captcha-challenge'], 
-                        data['captcha-response'], 
-                        settings.RECAPTCHA_PRIVATE_KEY, 
+                        data['captcha-challenge'],
+                        data['captcha-response'],
+                        settings.RECAPTCHA_PRIVATE_KEY,
                         request.META['REMOTE_ADDR']
                         )
         if not result.is_valid:
