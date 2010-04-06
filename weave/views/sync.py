@@ -157,6 +157,8 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
             if wbo is not None:
                 logger.info("Delete Wbo %s in collection %s for user %s" % (wbo.wboid, col_name, request.user))
                 wbo.delete()
+            else:
+                logger.info("Deletion of wboid %s requested but there is no such wbo!" % (wboid))
         else:
             ids = request.GET.get('ids', None)
             if ids is not None:
@@ -168,6 +170,8 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
                 if collection is not None:
                     logger.info("Delete collection %s for user %s" % (collection.name, request.user))
                     Wbo.objects.filter(user=request.user, collection=collection).delete()
+                else:
+                    logger.info("Deletion of collection %s requested but there is no such collection!" % (col_name))
         return weave_timestamp(timestamp)
 
     else:
