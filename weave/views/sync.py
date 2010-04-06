@@ -69,7 +69,7 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
         wbo_queryset = limit_wbo_queryset(request, wbo_queryset)
 
         # If defined, returns the full WBO, rather than just the id. 
-        if not request.GET.has_key('full'): # return only the WBO ids
+        if not 'full' in request.GET: # return only the WBO ids
             return [wbo.wboid for wbo in wbo_queryset]
 
         return [wbo.get_response_dict() for wbo in wbo_queryset]
@@ -153,16 +153,19 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
             return weave_timestamp(timestamp)
 
         if col_name is not None and wboid is not None:
-            wbo = get_object_or_404(Wbo, user=request.user, collection__name=col_name, wboid=wboid)
+            wbo = Wbo.objects.get(user=request.user, collection__name=col_name, wboid=wboid)
             logger.info("Delete Wbo %s in collection %s for user %s" % (wbo.wboid, col_name, request.user))
             wbo.delete()
         else:
             ids = request.GET.get('ids', None)
             if ids is not None:
                 for wbo in Wbo.objects.filter(user=request.user, wboid__in=ids.split(',')):
+                    logger.info("Delete Wbo %s in collection %s for user %s" % (wbo.wboid, col_name, request.user))
                     wbo.delete()
             else:
-                get_object_or_404(Collection.on_site, user=request.user, name=col_name).delete()
+                collection = Collection.on_site.filter(user=request.user, name=col_name).delete()
+                logger.info("Delete collection %s for user %s" % (collection.name, request.user))
+                collection.delete()
         return weave_timestamp(timestamp)
 
     else:
