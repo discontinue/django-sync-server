@@ -167,7 +167,7 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
                 collection = Collection.on_site.filter(user=request.user, name=col_name).delete()
                 if collection is not None:
                     logger.info("Delete collection %s for user %s" % (collection.name, request.user))
-                    collection.delete()
+                    Wbo.objects.filter(user=request.user, collection=collection).delete()
         return weave_timestamp(timestamp)
 
     else:
