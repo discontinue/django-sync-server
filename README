@@ -26,6 +26,10 @@ synchronized, with end-to-end encryption for your privacy and security.
  history
 =========
 
+- v0.1.5
+
+  - Changes to establish compatibility with Weave client v1.2b3
+
 - v0.1.4
   
   - split weave app and testproject
