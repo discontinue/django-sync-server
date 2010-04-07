@@ -81,7 +81,10 @@ def limit_wbo_queryset(request, queryset):
 
 
 def assert_weave_version(version):
-    if version == "1.0":
+    """
+    Check the weave api version (comes from the url).
+    """
+    if version in ("1.0", "1"):
         return
 
     msg = "unsupported weave client version: %r" % version
