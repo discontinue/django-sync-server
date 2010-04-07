@@ -15,11 +15,13 @@ from django.http import HttpResponse
 
 # django-weave own stuff
 from weave import Logging
+from weave.utils import assert_weave_version
 
 logger = Logging.get_logger()
 
 @csrf_exempt
 def captcha(request, version):
+    assert_weave_version(version)
     # Check for aviability of recaptcha 
     # (can be found at: http://pypi.python.org/pypi/recaptcha-client)
     try:
@@ -32,4 +34,3 @@ def captcha(request, version):
         raise ImproperlyConfigured
     # Send a simple HTML to the client. It get's rendered inside the Weave client.
     return HttpResponse("<html><body>%s</body></html>" % displayhtml(settings.RECAPTCHA_PUBLIC_KEY))
-    

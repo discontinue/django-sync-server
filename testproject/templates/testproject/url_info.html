@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<p>
+	Use <strong>{{ server_url }}</strong> as server url in your weave client preferences.
+</p>
+<h3>Some test urls:</h3>
+<ul>
+	<li>
+		<a href="{{ register_check_url }}">{{ register_check_url }}</a><br />
+		must return <strong>0</strong>, because user exist.
+	</li>
+	<li>
+		<a href="{{ info_url }}">{{ info_url }}</a><br />
+		response json data.
+	</li>
+</ul>
+{% endblock content %}

@@ -41,7 +41,7 @@ PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-ADMINS = () 
+ADMINS = ()
 
 MANAGERS = ADMINS
 
@@ -77,11 +77,14 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.transaction.TransactionMiddleware',
 )
 
+LOGIN_URL = "admin"
+
 ROOT_URLCONF = 'testproject.urls'
 
 
 TEMPLATE_DIRS = (
     os.path.join(os.path.abspath(os.path.dirname(django.__file__)), "contrib/admin/templates"),
+    os.path.join(PROJECT_ROOT, "templates"),
 )
 
 INSTALLED_APPS = (
@@ -95,5 +98,5 @@ INSTALLED_APPS = (
 )
 
 # Must be obtained from http://recaptcha.net/ by registering an account.
-RECAPTCHA_PUBLIC_KEY = '' 
+RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''

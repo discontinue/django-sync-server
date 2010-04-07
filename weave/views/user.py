@@ -25,6 +25,7 @@ from django.http import HttpResponseBadRequest, HttpResponse, \
 from weave import constants
 from weave.decorators import logged_in_or_basicauth
 from weave import Logging
+from weave.utils import assert_weave_version
 
 logger = Logging.get_logger()
 
@@ -68,7 +69,7 @@ def node(request, version, username):
     """
     finding cluster for user -> return 404 -> Using serverURL as data cluster (multi-cluster support disabled)
     """
-    assert version == "1"
+    assert_weave_version(version)
 
     try:
         User.objects.get(username=username)

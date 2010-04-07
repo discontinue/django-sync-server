@@ -1,21 +1,29 @@
+# coding:utf-8
+
 '''
-Utility functions for Weave API.
-
-Created on 15.03.2010
-
-@license: GNU GPL v3 or above, see LICENSE for more details.
-@copyright: 2010 see AUTHORS for more details.
-@author: Jens Diemer
-@author: FladischerMichael
+    Utility functions for Weave API.
+    
+    Created on 15.03.2010
+    
+    @license: GNU GPL v3 or above, see LICENSE for more details.
+    @copyright: 2010 see AUTHORS for more details.
+    @author: Jens Diemer
+    @author: FladischerMichael
 '''
 
 import time
 from datetime import datetime
-    
+
+from weave import Logging
+
+logger = Logging.get_logger()
+
+
 def weave_timestamp(timedata=None):
     if timedata is None:
         timedata = datetime.now()
     return time.mktime(timedata.timetuple())
+
 
 def limit_wbo_queryset(request, queryset):
     """
@@ -70,4 +78,13 @@ def limit_wbo_queryset(request, queryset):
         queryset = queryset[:int(limit)]
 
     return queryset
-        
+
+
+def assert_weave_version(version):
+    if version == "1.0":
+        return
+
+    msg = "unsupported weave client version: %r" % version
+    logger.error(msg)
+    raise AssertionError(msg)
+

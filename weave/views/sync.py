@@ -22,7 +22,7 @@ from django.core.exceptions import ValidationError
 
 # django-weave own stuff
 from weave.models import Collection, Wbo
-from weave.utils import limit_wbo_queryset, weave_timestamp
+from weave.utils import limit_wbo_queryset, weave_timestamp, assert_weave_version
 from weave.decorators import weave_assert_username, logged_in_or_basicauth, \
   weave_render_response
 from weave import Logging
@@ -38,6 +38,7 @@ def info(request, version, username, timestamp):
     return all collection keys with the timestamp
     https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#GET
     """
+    assert_weave_version(version)
     collections = dict()
     for collection in Collection.on_site.filter(user=request.user):
         collections[collection.name] = weave_timestamp(collection.modified)
@@ -52,6 +53,7 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
     """
     Handle storing Collections and WBOs. 
     """
+    assert_weave_version(version)
     if 'X-If-Unmodified-Since' in request.META:
         since = datetime.fromtimestamp(float(request.META['X-If-Unmodified-Since']))
     else:
