@@ -26,6 +26,11 @@ synchronized, with end-to-end encryption for your privacy and security.
  history
 =========
 
+- v0.1.6
+
+  - Bugfix checking weave api version from url.
+  - Add a tiny info root page to testproject.
+
 - v0.1.5
 
   - Changes to establish compatibility with Weave client v1.2b3
