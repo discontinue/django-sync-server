@@ -7,8 +7,10 @@
         You should not edit this file!
         Overwrite settings with a local settings file:
             local_settings.py
+        more info:
+            http://code.google.com/p/django-weave/wiki/WeaveSettings
 
-    Here are not all settings predifined you can use. Please look at the
+    Here are not all settings predefined you can use. Please look at the
     django documentation for a full list of all items:
         http://www.djangoproject.com/documentation/settings/
 

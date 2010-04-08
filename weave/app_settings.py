@@ -9,6 +9,8 @@
         You should not edit this file!
         Overwrite settings with a local settings file:
             local_settings.py
+        more info:
+            http://code.google.com/p/django-weave/wiki/WeaveSettings
     
     :copyleft: 2010 by the django-weave team, see AUTHORS for more details.
     :license: GNU GPL v3 or above, see LICENSE for more details.

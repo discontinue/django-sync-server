@@ -12,6 +12,7 @@ import base64
 import logging
 import time
 
+
 if __name__ == "__main__":
     # run unittest directly
     # this works only in a created test virtualenv, see:
@@ -26,6 +27,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.test.client import Client
 from django.test import TestCase
+from django.conf import settings
 
 from weave import Logging
 
@@ -98,7 +100,9 @@ class WeaveServerTest(TestCase):
         url = reverse("weave-info", kwargs={"username":self.testuser.username, "version":"1.0"})
         response = self.client.get(url)
         self.failUnlessEqual(response.status_code, 401) # Unauthorized: request requires user authentication
-        self.failUnless(response["www-authenticate"].startswith('Basic realm="'))
+        self.failUnlessEqual(
+            response["www-authenticate"], 'Basic realm="%s"' % settings.WEAVE.BASICAUTH_REALM
+        )
         self.failUnlessEqual(response.content, "")
 
     def test_basicauth_send_authenticate(self):
