@@ -39,7 +39,7 @@ def info(request, version, username, timestamp):
     https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API#GET
     """
     assert_weave_version(version)
-    collections = dict()
+    collections = {}
     for collection in Collection.on_site.filter(user=request.user):
         collections[collection.name] = weave_timestamp(collection.modified)
     return collections
