@@ -111,10 +111,10 @@ def exists(request, version, username):
             User.objects.get(username=username)
         except User.DoesNotExist:
             logger.debug("User %r doesn't exist!" % username)
-            return HttpResponse("0")
+            return HttpResponse(constants.USER_DOES_NOT_EXIST)
         else:
             logger.debug("User %r exist." % username)
-            return HttpResponse("1")
+            return HttpResponse(constants.USER_EXIST)
     elif request.method == 'PUT':
         # Check for aviability of recaptcha 
         # (can be found at: http://pypi.python.org/pypi/recaptcha-client)
@@ -123,8 +123,8 @@ def exists(request, version, username):
         except ImportError:
             logger.error("Captcha requested but unable to import the 'recaptcha' package!")
             return HttpResponse("Captcha support disabled due to missing Python package 'recaptcha'.")
-        if not getattr(settings, "RECAPTCHA_PRIVATE_KEY"):
-            logger.error("Trying to create user but settings.RECAPTCHA_PRIVATE_KEY not set")
+        if not getattr(settings.WEAVE, "RECAPTCHA_PRIVATE_KEY"):
+            logger.error("Trying to create user but settings.WEAVE.RECAPTCHA_PRIVATE_KEY not set")
             raise ImproperlyConfigured
         # Handle user creation.
         data = json.loads(request.raw_post_data)
@@ -135,7 +135,7 @@ def exists(request, version, username):
         result = submit(
                         data['captcha-challenge'],
                         data['captcha-response'],
-                        settings.RECAPTCHA_PRIVATE_KEY,
+                        settings.WEAVE.RECAPTCHA_PRIVATE_KEY,
                         request.META['REMOTE_ADDR']
                         )
         if not result.is_valid:

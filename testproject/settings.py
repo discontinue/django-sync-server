@@ -5,7 +5,7 @@
 
     IMPORTANT:
         You should not edit this file!
-        Owerwrite settings with a local settings file:
+        Overwrite settings with a local settings file:
             local_settings.py
 
     Here are not all settings predifined you can use. Please look at the
@@ -97,6 +97,9 @@ INSTALLED_APPS = (
     "weave",
 )
 
-# Must be obtained from http://recaptcha.net/ by registering an account.
-RECAPTCHA_PUBLIC_KEY = ''
-RECAPTCHA_PRIVATE_KEY = ''
+from weave import app_settings as WEAVE
+
+try:
+    from local_settings import *
+except ImportError:
+    pass

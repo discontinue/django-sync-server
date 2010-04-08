@@ -35,7 +35,7 @@ except ImportError:
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.contrib.auth import authenticate, login
 
 from weave.utils import weave_timestamp
@@ -56,28 +56,40 @@ def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
 
     # They are not logged in. See if they provided login credentials
     if 'HTTP_AUTHORIZATION' in request.META:
+        # NOTE: We are only support basic authentication for now.
         auth = request.META['HTTP_AUTHORIZATION'].split()
-        if len(auth) == 2:
-            # NOTE: We are only support basic authentication for now.
-            #
-            if auth[0].lower() == "basic":
-                uname, passwd = base64.b64decode(auth[1]).split(':')
-                user = authenticate(username=uname, password=passwd)
-                if user is not None:
-                    if user.is_active:
-                        login(request, user)
-                        request.user = user
-                        return view(request, *args, **kwargs)
+        if len(auth) != 2:
+            logger.debug("HTTP_AUTHORIZATION wrong length.")
+            return HttpResponseBadRequest()
+
+        auth_type, auth_data = auth
+
+        if auth_type.lower() != "basic":
+            logger.debug("HTTP_AUTHORIZATION is not 'basic'")
+            return HttpResponseBadRequest()
+
+        uname, passwd = base64.b64decode(auth_data).split(':')
+        user = authenticate(username=uname, password=passwd)
+        if user is None:
+            logger.debug("basicauth error: user %r unknown or password wrong." % uname)
+        else:
+            if not user.is_active:
+                logger.debug("basicauth error: user %r is not active." % uname)
+            else:
+                login(request, user)
+                request.user = user
+                logger.debug("basicauth success: user %r logged in." % uname)
+                return view(request, *args, **kwargs)
 
     # Either they did not provide an authorization header or
     # something in the authorization attempt failed. Send a 401
     # back to them to ask them to authenticate.
     response = HttpResponse()
-    response.status_code = 401
+    response.status_code = 401 # Unauthorized: request requires user authentication
     response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
     return response
 
-def logged_in_or_basicauth(func, realm=None):
+def logged_in_or_basicauth(func, realm=settings.WEAVE.BASICAUTH_REALM):
     """
     A simple decorator that requires a user to be logged in. If they are not
     logged in the request is examined for a 'authorization' header.
@@ -192,7 +204,7 @@ def weave_render_response(func):
             response["content-type"] = "text/plain"
             response.content = json.dumps(data, indent=4)
         else:
-            if request.META['HTTP_ACCEPT'] == 'application/newlines' and isinstance(data, list):
+            if request.META.get("HTTP_ACCEPT") == 'application/newlines' and isinstance(data, list):
                 response.content = '\n'.join([json.dumps(element) for element in data]) + '\n'
                 response["content-type"] = 'application/newlines'
                 response['X-Weave-Records'] = len(data)
