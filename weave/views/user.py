@@ -85,7 +85,8 @@ def node(request, version, username):
 @csrf_exempt
 def register_check(request, username):
     """
-    Returns 1 if the username exist, 0 if not exist.
+    returns "1" if username is available (doesn't exist)
+    https://wiki.mozilla.org/Labs/Weave/ServerAPI#Checking_if_Username.2FEmail_already_exists
     """
     try:
         User.objects.get(username=username)

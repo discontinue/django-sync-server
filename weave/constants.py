@@ -1,13 +1,18 @@
-'''
-from http://hg.mozilla.org/labs/weave/file/tip/tools/scripts/weave_server.py#l189
+# coding:utf-8
 
-Created on 15.03.2010
-
-@license: GNU GPL v3 or above, see LICENSE for more details.
-@copyright: 2010 see AUTHORS for more details.
-@author: Jens Diemer
-@author: Michael Fladischer <michael@fladi.at>
-'''
+"""
+    from:
+        https://wiki.mozilla.org/Labs/Weave/ServerAPI#Body_numeric_codes_and_their_meanings 
+    see also:
+        http://hg.mozilla.org/labs/weave/file/tip/tools/scripts/weave_server.py#l189 
+    
+    Created on 15.03.2010
+    
+    @license: GNU GPL v3 or above, see LICENSE for more details.
+    @copyright: 2010 see AUTHORS for more details.
+    @author: Jens Diemer
+    @author: Michael Fladischer <michael@fladi.at>
+"""
 
 ERR_UID_OR_EMAIL_AVAILABLE = "1"
 ERR_WRONG_HTTP_METHOD = "-1"
