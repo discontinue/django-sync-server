@@ -1,4 +1,3 @@
-
 =============
  description
 =============
@@ -17,8 +16,9 @@ synchronized, with end-to-end encryption for your privacy and security.
 sourcecode
 ----------
 
-Our code hosted on github:
-`http://github.com/jedie/django-weave`_
+Our code hosted on `github.com/jedie/django-weave`_
+
+.. _github.com/jedie/django-weave: http://github.com/jedie/django-weave
 
 Clone our git repo::
 
@@ -28,17 +28,14 @@ Use subversion::
   
     svn checkout http://svn.github.com/jedie/django-weave.git
 
-
 --------
-homepage
+download
 --------
 
-:homepage:
-  http://github.com/jedie/django-weave 
+Python packages available on: http://pypi.python.org/pypi/django-weave/
 
-:old homepage:
-  http://code.google.com/p/django-weave/
- 
+Unofficial debian packages: http://debian.fladi.at/pool/main/d/django-weave/
+
 
 =========
  history
@@ -79,8 +76,6 @@ homepage
  weave links
 =============
 
-Weave homepage:
-`https://wiki.mozilla.org/Labs/Weave`_
+Mozilla Weave homepage: https://wiki.mozilla.org/Labs/Weave
 
-more links here:
-`http://code.google.com/p/django-weave/wiki/WeaveLinks`_
+more links: http://code.google.com/p/django-weave/wiki/WeaveLinks
