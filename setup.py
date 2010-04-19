@@ -34,7 +34,7 @@ def get_authors():
     return authors
 
 def get_long_description():
-    f = file(os.path.join(PACKAGE_ROOT, "README"), "r")
+    f = file(os.path.join(PACKAGE_ROOT, "README.rst"), "r")
     long_description = f.read()
     f.close()
     long_description.strip()

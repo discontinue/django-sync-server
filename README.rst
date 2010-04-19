@@ -1,26 +1,44 @@
+
 =============
  description
 =============
 
 django-weave is a reusable application which implements a Mozilla Labs Weave server for Django.
 
-More information on our homepage!
-
+--------------
 What is weave?
+--------------
 
 Weave Browser Sync is a free browser add-on from Mozilla Labs that keeps your
 bookmarks, saved passwords, browsing history and open tabs backed up and
 synchronized, with end-to-end encryption for your privacy and security.  
 
-====================
- django-weave links
-====================
+---------- 
+sourcecode
+----------
+
+Our code hosted on github:
+`http://github.com/jedie/django-weave`_
+
+Clone our git repo::
+
+    git clone git@github.com:jedie/django-weave.git
+
+Use subversion::
+  
+    svn checkout http://svn.github.com/jedie/django-weave.git
+
+
+--------
+homepage
+--------
 
 :homepage:
-  http://code.google.com/p/django-weave/
+  http://github.com/jedie/django-weave 
 
-:SVN:
- http://django-weave.googlecode.com/svn/trunk/
+:old homepage:
+  http://code.google.com/p/django-weave/
+ 
 
 =========
  history
@@ -61,11 +79,8 @@ synchronized, with end-to-end encryption for your privacy and security.
  weave links
 =============
 
-:Weave homepage:
-  https://wiki.mozilla.org/Labs/Weave
+Weave homepage:
+`https://wiki.mozilla.org/Labs/Weave`_
 
-:more links here:
-  http://code.google.com/p/django-weave/wiki/WeaveLinks
-
-
-*(Readme text $Rev$)*
+more links here:
+`http://code.google.com/p/django-weave/wiki/WeaveLinks`_
