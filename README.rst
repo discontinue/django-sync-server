@@ -22,7 +22,7 @@ Our code hosted on `github.com/jedie/django-weave`_
 
 Clone our git repo::
 
-    git clone git@github.com:jedie/django-weave.git
+    git clone git://github.com/jedie/django-weave.git
 
 Use subversion::
   
