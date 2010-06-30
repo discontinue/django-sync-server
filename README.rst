@@ -2,44 +2,49 @@
  description
 =============
 
-django-weave is a reusable application which implements a Mozilla Labs Weave server for Django.
+django-sync-server is a reusable application which implements a Mozilla Labs Weave server for Django.
 
 --------------
 What is weave?
 --------------
 
-Weave Browser Sync is a free browser add-on from Mozilla Labs that keeps your
-bookmarks, saved passwords, browsing history and open tabs backed up and
-synchronized, with end-to-end encryption for your privacy and security.  
+Firefox Sync (formerly Mozilla Labs Weave Browser Sync) is a free browser
+add-on from Mozilla Labs that keeps your bookmarks, saved passwords, browsing
+history and open tabs backed up and synchronized, with end-to-end encryption
+for your privacy and security.  
 
 ---------- 
 sourcecode
 ----------
 
-Our code hosted on `github.com/jedie/django-weave`_
+Our code hosted on `github.com/jedie/django-sync-server`_
 
-.. _github.com/jedie/django-weave: http://github.com/jedie/django-weave
+.. _github.com/jedie/django-sync-server: http://github.com/jedie/django-sync-server
 
 Clone our git repo::
 
-    git clone git://github.com/jedie/django-weave.git
+    git clone git://github.com/jedie/django-sync-server.git
 
 Use subversion::
   
-    svn checkout http://svn.github.com/jedie/django-weave.git
+    svn checkout http://svn.github.com/jedie/django-sync-server.git
 
 --------
 download
 --------
 
-Python packages available on: http://pypi.python.org/pypi/django-weave/
+Python packages available on: http://pypi.python.org/pypi/django-sync-server/
 
-Unofficial debian packages: http://debian.fladi.at/pool/main/d/django-weave/
+Unofficial debian packages: http://debian.fladi.at/pool/main/d/django-sync-server/
 
 
 =========
  history
 =========
+
+- v0.1.7
+
+  - 'django-weave' was renamed to 'django-sync-server'
 
 - v0.1.6
 
@@ -78,4 +83,4 @@ Unofficial debian packages: http://debian.fladi.at/pool/main/d/django-weave/
 
 Mozilla Weave homepage: https://wiki.mozilla.org/Labs/Weave
 
-more links: http://code.google.com/p/django-weave/wiki/WeaveLinks
+more links: http://code.google.com/p/django-sync-server/wiki/WeaveLinks

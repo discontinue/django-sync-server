@@ -5,7 +5,7 @@ import os
 import logging
 
 
-__version__ = (0, 1, 6)
+__version__ = (0, 1, 7)
 __api__ = (1, 0)
 
 
