@@ -15,13 +15,13 @@ from django.http import HttpResponse
 
 # django-weave own stuff
 from weave import Logging
-from weave.utils import assert_weave_version
+from weave.decorators import weave_assert_version
 
 logger = Logging.get_logger()
 
+@weave_assert_version('1.0')
 @csrf_exempt
 def captcha(request, version):
-    assert_weave_version(version)
     # Check for aviability of recaptcha 
     # (can be found at: http://pypi.python.org/pypi/recaptcha-client)
     try:

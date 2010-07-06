@@ -23,12 +23,12 @@ from django.http import HttpResponseBadRequest, HttpResponse, \
 
 # django-weave own stuff
 from weave import constants
-from weave.decorators import logged_in_or_basicauth
+from weave.decorators import logged_in_or_basicauth, weave_assert_version
 from weave import Logging
-from weave.utils import assert_weave_version
 
 logger = Logging.get_logger()
 
+@weave_assert_version('1.0')
 @logged_in_or_basicauth
 @csrf_exempt
 def password(request):
@@ -64,13 +64,13 @@ def password(request):
     return HttpResponse()
 
 
+@weave_assert_version('1.0')
 @csrf_exempt
 def node(request, version, username):
     """
     finding cluster for user -> return 404 -> Using serverURL as data cluster (multi-cluster support disabled)
     """
-    assert_weave_version(version)
-
+    
     try:
         User.objects.get(username=username)
     except User.DoesNotExist:
@@ -97,7 +97,7 @@ def register_check(request, username):
         logger.debug("User %r exist." % username)
         return HttpResponse(constants.ERR_UID_OR_EMAIL_IN_USE)
 
-
+@weave_assert_version('1.0')
 @csrf_exempt
 def exists(request, version, username):
     """

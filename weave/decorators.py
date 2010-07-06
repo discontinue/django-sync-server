@@ -153,7 +153,7 @@ def weave_assert_username(func, key='username'):
     
     Use:
     
-    @assert_username
+    @weave_assert_username
     def your_view(request, username):
     
     You can provide the key of the username field which is 'username' by default.
@@ -167,6 +167,30 @@ def weave_assert_username(func, key='username'):
             raise PermissionDenied("Username from HTTP authentication does not match URL!")
         return func(request, *args, **kwargs)
     return wrapper
+
+def weave_assert_version(version):
+    """
+    Check the weave api version (comes from the url).
+    
+    Use:
+    
+    @weave_assert_version
+    def your_view(request, username):
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(request, *args, **kwargs):
+            if not 'version' in kwargs:
+                msg = "no version specified in URL"
+                logger.error(msg)
+                raise AssertionError(msg)
+            if kwargs['version'] != version:
+                msg = "unsupported weave client version: %r" % kwargs['version']
+                logger.error(msg)
+                raise AssertionError(msg)
+            return func(request, *args, **kwargs)
+        return wrapper
+    return decorator
 
 def weave_render_response(func):
     """
