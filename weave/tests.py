@@ -58,10 +58,11 @@ class WeaveServerTest(TestCase):
 
     def assertWeaveTimestamp(self, response):
         """ Check if a valid weave timestamp is in response. """
+        key = "x-weave-timestamp"
         try:
-            raw_timestamp = response["x-weave-timestamp"]
+            raw_timestamp = response[key]
         except KeyError, err:
-            self.fail("Weave timestamp %r not in response.")
+            self.fail("Weave timestamp (%s) not in response." % key)
 
         timestamp = float(raw_timestamp)
         comparison_value = time.time() - 1
@@ -112,6 +113,20 @@ class WeaveServerTest(TestCase):
         self.failUnlessEqual(response["content-type"], "application/json")
         self.assertWeaveTimestamp(response)
 
+    def test_delete_not_existing_wbo(self):
+        """
+        http://github.com/jedie/django-sync-server/issues#issue/6
+        """
+        url = reverse("weave-wbo_storage",
+            kwargs={
+                "username":self.testuser.username, "version":"1.0",
+                "col_name": "foobar", "wboid": "doesn't exist",
+            }
+        )
+        response = self.client.delete(url, HTTP_AUTHORIZATION=self.auth_data)
+        self.assertContains(response, "Page not found (404)", count=None, status_code=404)
+        self.failUnlessEqual(response["content-type"], "text/html; charset=utf-8")
+        
 #        from django_tools.unittest_utils.BrowserDebug import debug_response
 #        debug_response(response)
 

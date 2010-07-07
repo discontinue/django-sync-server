@@ -14,8 +14,8 @@ from django.conf.urls.defaults import patterns, url
 from weave.views import sync, user, misc
 
 urlpatterns = patterns('weave',
-    url(r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/storage/(?P<col_name>.*?)/(?P<wboid>.*?)$', sync.storage),
-    url(r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/storage/(?P<col_name>.*?)$', sync.storage),
+    url(r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/storage/(?P<col_name>.*?)/(?P<wboid>.*?)$', sync.storage, name="weave-wbo_storage"),
+    url(r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/storage/(?P<col_name>.*?)$', sync.storage, name="weave-col_storage"),
     url(r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/storage$', sync.storage),
     url(r'^(?P<version>[\d\.]+?)/(?P<username>.*?)/info/collections$', sync.info, name="weave-info"),
     url(r'^misc/(?P<version>[\d\.]+?)/captcha_html$', misc.captcha, name="weave-captcha"),

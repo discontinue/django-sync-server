@@ -16,9 +16,11 @@ try:
 except ImportError:
     from django.utils import simplejson as json
 
+from django.conf import settings
 from django.contrib.csrf.middleware import csrf_exempt
-from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 
 # django-sync-server own stuff
 from weave.models import Collection, Wbo
@@ -155,12 +157,21 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
             return weave_timestamp(timestamp)
 
         if col_name is not None and wboid is not None:
-            wbo = Wbo.objects.get(user=request.user, collection__name=col_name, wboid=wboid)
-            if wbo is not None:
-                logger.info("Delete Wbo %s in collection %s for user %s" % (wbo.wboid, col_name, request.user))
-                wbo.delete()
+            try:
+                wbo = Wbo.objects.get(user=request.user, collection__name=col_name, wboid=wboid)
+            except Wbo.DoesNotExist, err:
+                msg = (
+                    "Deletion of wboid %s from collection %r for user %s requested,"
+                    " but there is no such wbo: %s"
+                ) % (wboid, col_name, request.user, err)
+                logger.info(msg)
+                if settings.DEBUG:
+                    raise Http404(msg)
+                else:
+                    raise Http404()
             else:
-                logger.info("Deletion of wboid %s requested but there is no such wbo!" % (wboid))
+                logger.info("Delete Wbo %s in collection %s for user %s" % (wbo.wboid, col_name, request.user))
+                wbo.delete()               
         else:
             ids = request.GET.get('ids', None)
             if ids is not None:
