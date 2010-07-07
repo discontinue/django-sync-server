@@ -4,7 +4,7 @@
 Created on 27.03.2010
 
     @license: GNU GPL v3 or above, see LICENSE for more details.
-    @copyleft: 2010 by the django-weave team, see AUTHORS for more details.
+    @copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
 '''
 # Due to Mozilla Weave supporting Recaptcha solely, we have to stick with it until
 # they decide to change the interface to pluggable captchas.
@@ -13,7 +13,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.contrib.csrf.middleware import csrf_exempt
 from django.http import HttpResponse
 
-# django-weave own stuff
+# django-sync-server own stuff
 from weave import Logging
 from weave.decorators import weave_assert_version
 

@@ -7,7 +7,7 @@
     Created on 15.03.2010
     
     @license: GNU GPL v3 or above, see LICENSE for more details.
-    @copyleft: 2010 by the django-weave team, see AUTHORS for more details.
+    @copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
 '''
 try:
     import json # New in Python v2.6
@@ -21,7 +21,7 @@ from django.contrib.csrf.middleware import csrf_exempt
 from django.http import HttpResponseBadRequest, HttpResponse, \
     HttpResponseNotFound
 
-# django-weave own stuff
+# django-sync-server own stuff
 from weave import constants
 from weave.decorators import logged_in_or_basicauth, weave_assert_version
 from weave import Logging

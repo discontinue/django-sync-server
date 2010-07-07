@@ -11,7 +11,7 @@
     $Rev$
     $Author$
 
-    :copyleft: 2010 by the django-weave team, see AUTHORS for more details.
+    :copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
     :license: GNU GPL v3 or above, see LICENSE for more details.
 """
 
@@ -41,14 +41,14 @@ def get_long_description():
     return long_description
 
 setup(
-    name='django-weave',
+    name='django-sync-server',
     version=VERSION_STRING,
-    description='django-weave is a Django reusable application witch implements a Firefox weave server.',
+    description='django-sync-server is a Django reusable application witch implements a Firefox weave server.',
     long_description=get_long_description(),
     author=get_authors(),
     maintainer="Jens Diemer",
-    maintainer_email="django-weave@jensdiemer.de",
-    url='http://code.google.com/p/django-weave/',
+    maintainer_email="django-sync-server@jensdiemer.de",
+    url='http://code.google.com/p/django-sync-server/',
     packages=find_packages(exclude=['testproject', 'testproject.*']),
     include_package_data=True, # include package data under svn source control
     zip_safe=False,

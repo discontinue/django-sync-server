@@ -6,7 +6,7 @@
     Created on 15.03.2010
     
     @license: GNU GPL v3 or above, see LICENSE for more details.
-    @copyleft: 2010 by the django-weave team, see AUTHORS for more details.
+    @copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
 '''
 
 from datetime import datetime
@@ -20,7 +20,7 @@ from django.contrib.csrf.middleware import csrf_exempt
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 
-# django-weave own stuff
+# django-sync-server own stuff
 from weave.models import Collection, Wbo
 from weave.utils import limit_wbo_queryset, weave_timestamp
 from weave.decorators import weave_assert_username, weave_assert_version, \

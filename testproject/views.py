@@ -18,5 +18,4 @@ def url_info(request):
         "register_check_url": absolute_uri(request, "weave-register_check", username=request.user.username),
         "info_url": absolute_uri(request, "weave-info", version="1.0", username=request.user.username),
     }
-
     return render_to_response("testproject/url_info.html", context)

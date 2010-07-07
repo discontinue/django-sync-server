@@ -8,7 +8,7 @@
         Overwrite settings with a local settings file:
             local_settings.py
         more info:
-            http://code.google.com/p/django-weave/wiki/WeaveSettings
+            http://code.google.com/p/django-sync-server/wiki/WeaveSettings
 
     Here are not all settings predefined you can use. Please look at the
     django documentation for a full list of all items:
@@ -20,7 +20,7 @@
     $Rev:$
     $Author: JensDiemer $
 
-    :copyleft: 2010 by the django-weave team, see AUTHORS for more details.
+    :copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
     :license: GNU GPL v3 or above, see LICENSE for more details.
 """
 

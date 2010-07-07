@@ -1,10 +1,10 @@
 #coding:utf-8
 
 """
-    django-weave unittests
+    django-sync-server unittests
     ~~~~~~~~~~~~~~~~~~~~~~
 
-    :copyleft: 2010 by the django-weave team, see AUTHORS for more details.
+    :copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
     :license: GNU GPL v3 or above, see LICENSE for more details.
 """
 
@@ -16,11 +16,9 @@ import time
 if __name__ == "__main__":
     # run unittest directly
     # this works only in a created test virtualenv, see:
-    # http://code.google.com/p/django-weave/wiki/CreateTestEnvironment
+    # http://code.google.com/p/django-sync-server/wiki/CreateTestEnvironment
     import os
     os.environ["DJANGO_SETTINGS_MODULE"] = "testproject.settings"
-    virtualenv_file = os.path.abspath("../../../bin/activate_this.py")
-    execfile(virtualenv_file, dict(__file__=virtualenv_file))
 
 
 from django.contrib.auth.models import User

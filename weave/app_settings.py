@@ -1,18 +1,18 @@
 # coding:utf-8
 
 """   
-    django-weave app settings
+    django-sync-server app settings
     ~~~~~~~~~~~~~~~~~~~~~~~~~
-    All own settings for the django-weave app.
+    All own settings for the django-sync-server app.
     
     **IMPORTANT:**
         You should not edit this file!
         Overwrite settings with a local settings file:
             local_settings.py
         more info:
-            http://code.google.com/p/django-weave/wiki/WeaveSettings
+            http://code.google.com/p/django-sync-server/wiki/WeaveSettings
     
-    :copyleft: 2010 by the django-weave team, see AUTHORS for more details.
+    :copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
     :license: GNU GPL v3 or above, see LICENSE for more details.
 """
 
@@ -21,4 +21,4 @@
 RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''
 
-BASICAUTH_REALM = "django-weave"
+BASICAUTH_REALM = "django-sync-server"
