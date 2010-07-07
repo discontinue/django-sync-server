@@ -42,6 +42,10 @@ Unofficial debian packages: http://debian.fladi.at/pool/main/d/django-sync-serve
  history
 =========
 
+- v0.2.0
+
+  - django-sync-server own basic auth function can be disabled via app settings.
+
 - v0.1.7
 
   - 'django-weave' was renamed to 'django-sync-server'

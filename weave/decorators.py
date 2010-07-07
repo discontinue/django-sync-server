@@ -35,13 +35,16 @@ except ImportError:
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest,\
+    HttpResponseForbidden
 from django.contrib.auth import authenticate, login
 
 from weave.utils import weave_timestamp
 from weave import Logging
 
+
 logger = Logging.get_logger()
+
 
 def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
     """
@@ -53,6 +56,16 @@ def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
     if test_func(request.user):
         # Already logged in, just return the view.
         return view(request, *args, **kwargs)
+    
+    if settings.WEAVE.DISABLE_LOGIN:
+        # disable weave own basicauth login, user must login before
+        # using firefox-sync e.g. use the django admin login page.
+        msg = "Request forbidden, basicauth was disabled."
+        logger.debug(msg)
+        if settings.DEBUG:
+            return HttpResponseForbidden(msg)
+        else:
+            return HttpResponseForbidden()
 
     # They are not logged in. See if they provided login credentials
     if 'HTTP_AUTHORIZATION' in request.META:

@@ -103,6 +103,14 @@ class WeaveServerTest(TestCase):
             response["www-authenticate"], 'Basic realm="%s"' % settings.WEAVE.BASICAUTH_REALM
         )
         self.failUnlessEqual(response.content, "")
+        
+    def test_disable_basicauth(self):
+        """ We should not get a basicauth response, if login is disabled. """
+        settings.WEAVE.DISABLE_LOGIN = True
+        url = reverse("weave-info", kwargs={"username":self.testuser.username, "version":"1.0"})
+        response = self.client.get(url)
+        self.failUnlessEqual(response.status_code, 403) # Forbidden
+        self.failIf("www-authenticate" in response)
 
     def test_basicauth_send_authenticate(self):
         """ test if we can login via basicauth. """

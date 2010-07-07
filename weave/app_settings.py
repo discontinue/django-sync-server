@@ -22,3 +22,10 @@ RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''
 
 BASICAUTH_REALM = "django-sync-server"
+
+# Disable own basicauth login?
+# If True: basicauth would be deactivated and every login request over 
+# django-sync-server own views would be denied.
+# The user must login in a other way, before using firefox-sync
+# e.g. use the django admin login page.
+DISABLE_LOGIN = False
