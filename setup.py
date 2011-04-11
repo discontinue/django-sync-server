@@ -26,7 +26,10 @@ PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 def get_authors():
     authors = []
-    f = file(os.path.join(PACKAGE_ROOT, "AUTHORS"), "r")
+    try:
+        f = file(os.path.join(PACKAGE_ROOT, "AUTHORS"), "r")
+    except Exception, err:
+        return ["[Error reading AUTHORS file: %s]" % err]
     for line in f:
         if line.startswith('*'):
             authors.append(line[1:].strip())
@@ -34,7 +37,10 @@ def get_authors():
     return authors
 
 def get_long_description():
-    f = file(os.path.join(PACKAGE_ROOT, "README.rst"), "r")
+    try:
+        f = file(os.path.join(PACKAGE_ROOT, "README.rst"), "r")
+    except Exception, err:
+        return "[Error reading README.rst file: %s]" % err
     long_description = f.read()
     f.close()
     long_description.strip()
@@ -56,7 +62,7 @@ setup(
 #        "Development Status :: 1 - Planning",
 #        "Development Status :: 2 - Pre-Alpha",
 #        "Development Status :: 3 - Alpha",
-        "Development Status :: 4 - Beta",
+#        "Development Status :: 4 - Beta",
         "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
         "Intended Audience :: Developers",

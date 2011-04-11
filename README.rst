@@ -4,9 +4,9 @@
 
 django-sync-server is a reusable application which implements a Mozilla Labs Weave server for Django.
 
---------------
-What is weave?
---------------
+---------------------
+What is Firefox Sync?
+---------------------
 
 Firefox Sync (formerly Mozilla Labs Weave Browser Sync) is a free browser
 add-on from Mozilla Labs that keeps your bookmarks, saved passwords, browsing
@@ -41,6 +41,11 @@ Unofficial debian packages: http://debian.fladi.at/pool/main/d/django-sync-serve
 =========
  history
 =========
+
+- v0.2.1
+
+  - Some updates for django v1.2 API changes
+  - Change version string and add last commit date
 
 - v0.2.0
 

@@ -7,7 +7,7 @@
     Created on 15.03.2010
     
     @license: GNU GPL v3 or above, see LICENSE for more details.
-    @copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
+    @copyleft: 2010-2011 by the django-sync-server team, see AUTHORS for more details.
 '''
 try:
     import json # New in Python v2.6
@@ -17,7 +17,7 @@ except ImportError:
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth.models import User
-from django.contrib.csrf.middleware import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseBadRequest, HttpResponse, \
     HttpResponseNotFound
 
@@ -70,7 +70,7 @@ def node(request, version, username):
     """
     finding cluster for user -> return 404 -> Using serverURL as data cluster (multi-cluster support disabled)
     """
-    
+
     try:
         User.objects.get(username=username)
     except User.DoesNotExist:

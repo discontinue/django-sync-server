@@ -47,8 +47,12 @@ ADMINS = ()
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'sqlite3'
-DATABASE_NAME = os.path.join(PROJECT_ROOT, 'test.db3')
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(PROJECT_ROOT, 'test.db3')
+    }
+}
 
 TIME_ZONE = "UTC"
 
@@ -66,15 +70,10 @@ ADMIN_MEDIA_PREFIX = '/media/'
 
 SECRET_KEY = "Make this unique, and don't share it with anybody!"
 
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
-)
-
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.contrib.csrf.middleware.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
 )

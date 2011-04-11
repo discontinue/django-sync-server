@@ -6,7 +6,7 @@
     Created on 15.03.2010
     
     @license: GNU GPL v3 or above, see LICENSE for more details.
-    @copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
+    @copyleft: 2010-2011 by the django-sync-server team, see AUTHORS for more details.
 '''
 
 from datetime import datetime
@@ -17,7 +17,7 @@ except ImportError:
     from django.utils import simplejson as json
 
 from django.conf import settings
-from django.contrib.csrf.middleware import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ValidationError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -171,7 +171,7 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
                     raise Http404()
             else:
                 logger.info("Delete Wbo %s in collection %s for user %s" % (wbo.wboid, col_name, request.user))
-                wbo.delete()               
+                wbo.delete()
         else:
             ids = request.GET.get('ids', None)
             if ids is not None:
