@@ -1,0 +1,7 @@
+local_settings.py
+*.pyc
+*.log
+*~
+/django_sync_server.egg-info
+/dist
+*.db3
