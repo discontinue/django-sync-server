@@ -90,6 +90,6 @@ Unofficial debian packages: http://debian.fladi.at/pool/main/d/django-sync-serve
  weave links
 =============
 
-Mozilla Weave homepage: https://wiki.mozilla.org/Labs/Weave
+Firefox Sync homepage: https://wiki.mozilla.org/Firefox_Sync
 
 more links: http://code.google.com/p/django-sync-server/wiki/WeaveLinks
