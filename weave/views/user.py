@@ -22,11 +22,13 @@ from django.http import HttpResponseBadRequest, HttpResponse, \
     HttpResponseNotFound
 
 # django-sync-server own stuff
-from weave import constants
-from weave.decorators import logged_in_or_basicauth, weave_assert_version
 from weave import Logging
+from weave import constants
+from weave.decorators import logged_in_or_basicauth, weave_assert_version, \
+    fix_username
 
 logger = Logging.get_logger()
+
 
 @weave_assert_version('1.0')
 @logged_in_or_basicauth
@@ -65,6 +67,7 @@ def password(request):
 
 
 @weave_assert_version('1.0')
+@fix_username
 @csrf_exempt
 def node(request, version, username):
     """
@@ -82,6 +85,7 @@ def node(request, version, username):
         return HttpResponseNotFound(constants.ERR_UID_OR_EMAIL_IN_USE)
 
 
+@fix_username
 @csrf_exempt
 def register_check(request, username):
     """
@@ -97,7 +101,9 @@ def register_check(request, username):
         logger.debug("User %r exist." % username)
         return HttpResponse(constants.ERR_UID_OR_EMAIL_IN_USE)
 
+
 @weave_assert_version('1.0')
+@fix_username
 @csrf_exempt
 def exists(request, version, username):
     """

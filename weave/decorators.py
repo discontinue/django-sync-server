@@ -35,7 +35,7 @@ except ImportError:
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse, HttpResponseBadRequest,\
+from django.http import HttpResponse, HttpResponseBadRequest, \
     HttpResponseForbidden
 from django.contrib.auth import authenticate, login
 
@@ -56,7 +56,7 @@ def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
     if test_func(request.user):
         # Already logged in, just return the view.
         return view(request, *args, **kwargs)
-    
+
     if settings.WEAVE.DISABLE_LOGIN:
         # disable weave own basicauth login, user must login before
         # using firefox-sync e.g. use the django admin login page.
@@ -102,6 +102,7 @@ def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
     response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
     return response
 
+
 def logged_in_or_basicauth(func, realm=settings.WEAVE.BASICAUTH_REALM):
     """
     A simple decorator that requires a user to be logged in. If they are not
@@ -138,6 +139,7 @@ def logged_in_or_basicauth(func, realm=settings.WEAVE.BASICAUTH_REALM):
                                  realm, *args, **kwargs)
     return wrapper
 
+
 def has_perm_or_basicauth(func, perm, realm=""):
     """
     This is similar to the above decorator 'logged_in_or_basicauth'
@@ -157,6 +159,7 @@ def has_perm_or_basicauth(func, perm, realm=""):
                                  lambda u: u.has_perm(perm),
                                  realm, *args, **kwargs)
     return wrapper
+
 
 def weave_assert_username(func, key='username'):
     """
@@ -181,6 +184,7 @@ def weave_assert_username(func, key='username'):
         return func(request, *args, **kwargs)
     return wrapper
 
+
 def weave_assert_version(version):
     """
     Check the weave api version (comes from the url).
@@ -204,6 +208,7 @@ def weave_assert_version(version):
             return func(request, *args, **kwargs)
         return wrapper
     return decorator
+
 
 def weave_render_response(func):
     """
@@ -250,4 +255,24 @@ def weave_render_response(func):
                 response.content = json.dumps(data)
 
         return response
+    return wrapper
+
+
+def fix_username(func):
+    """
+    Work-a-round for sync in Firefox v4
+    see: https://github.com/jedie/django-sync-server/issues/8
+
+    Firefox v4 doesn't use a username anymore. It send a SHA1 from the
+    user email as the username.
+    Here we use only the first 30 characters of the username, because the
+    django user model allows only a username with a length of 30 characters.
+    """
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        print args, kwargs
+        if "username" in kwargs and len(kwargs["username"]) > 30:
+            kwargs["username"] = kwargs["username"][:30]
+        print args, kwargs
+        return func(request, *args, **kwargs)
     return wrapper
