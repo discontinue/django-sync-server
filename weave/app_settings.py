@@ -12,7 +12,7 @@
         more info:
             http://code.google.com/p/django-sync-server/wiki/WeaveSettings
     
-    :copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
+    :copyleft: 2010-2011 by the django-sync-server team, see AUTHORS for more details.
     :license: GNU GPL v3 or above, see LICENSE for more details.
 """
 
@@ -20,6 +20,10 @@
 # Must be obtained from http://recaptcha.net/ by registering an account.
 RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''
+
+# Create users without any captcha.
+# NOT RECOMMENDED! Spam bots can flooding your server!
+DONT_USE_CAPTCHA = False
 
 BASICAUTH_REALM = "django-sync-server"
 
@@ -29,3 +33,6 @@ BASICAUTH_REALM = "django-sync-server"
 # The user must login in a other way, before using firefox-sync
 # e.g. use the django admin login page.
 DISABLE_LOGIN = False
+
+# Log request/reponse debug information
+DEBUG_REQUEST = False

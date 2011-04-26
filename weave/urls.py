@@ -23,4 +23,5 @@ urlpatterns = patterns('weave',
     url(r'^user/(?P<version>[\d\.]+?)/(?P<username>.*?)/password$', user.password, name="weave-password"),
     url(r'^user/(?P<version>[\d\.]+?)/(?P<username>.*?)$', user.exists, name="weave-exists"),
     url(r'^api/register/check/(?P<username>.*?)$', user.register_check, name="weave-register_check"),
+    url(r'^weave-password-reset$', user.password_reset, name="weave-password_reset"),
 )

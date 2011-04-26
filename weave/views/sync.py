@@ -26,12 +26,13 @@ from django.shortcuts import get_object_or_404
 from weave.models import Collection, Wbo
 from weave.utils import limit_wbo_queryset, weave_timestamp
 from weave.decorators import weave_assert_username, weave_assert_version, \
-  logged_in_or_basicauth, weave_render_response, fix_username
+  logged_in_or_basicauth, weave_render_response, fix_username, debug_sync_request
 from weave import Logging
 
 logger = Logging.get_logger()
 
 
+@debug_sync_request
 @logged_in_or_basicauth
 @weave_assert_version('1.0')
 @fix_username
@@ -49,6 +50,7 @@ def info(request, version, username, timestamp):
     return collections
 
 
+@debug_sync_request
 @logged_in_or_basicauth
 @weave_assert_version('1.0')
 @fix_username

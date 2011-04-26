@@ -15,13 +15,18 @@ from django.http import HttpResponse
 
 # django-sync-server own stuff
 from weave import Logging
-from weave.decorators import weave_assert_version
+from weave.decorators import weave_assert_version, debug_sync_request
 
 logger = Logging.get_logger()
 
+@debug_sync_request
 @weave_assert_version('1.0')
 @csrf_exempt
 def captcha(request, version):
+    if settings.WEAVE.DONT_USE_CAPTCHA == True:
+        logger.warn("You should activate captcha!")#
+        return HttpResponse("Captcha support is disabled.")
+
     # Check for aviability of recaptcha 
     # (can be found at: http://pypi.python.org/pypi/recaptcha-client)
     try:

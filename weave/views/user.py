@@ -9,27 +9,30 @@
     @license: GNU GPL v3 or above, see LICENSE for more details.
     @copyleft: 2010-2011 by the django-sync-server team, see AUTHORS for more details.
 '''
+
 try:
     import json # New in Python v2.6
 except ImportError:
     from django.utils import simplejson as json
 
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth.models import User
-from django.views.decorators.csrf import csrf_exempt
+from django.core.exceptions import ImproperlyConfigured
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseBadRequest, HttpResponse, \
-    HttpResponseNotFound
+    HttpResponseNotFound, HttpResponseRedirect
+from django.views.decorators.csrf import csrf_exempt
 
 # django-sync-server own stuff
 from weave import Logging
 from weave import constants
 from weave.decorators import logged_in_or_basicauth, weave_assert_version, \
-    fix_username
+    fix_username, debug_sync_request
 
 logger = Logging.get_logger()
 
 
+@debug_sync_request
 @weave_assert_version('1.0')
 @logged_in_or_basicauth
 @csrf_exempt
@@ -66,6 +69,14 @@ def password(request):
     return HttpResponse()
 
 
+def password_reset(request):
+    """
+    Redirect to django own admin password change view.
+    """
+    return HttpResponseRedirect(reverse('admin:password_change'))
+
+
+@debug_sync_request
 @weave_assert_version('1.0')
 @fix_username
 @csrf_exempt
@@ -73,7 +84,6 @@ def node(request, version, username):
     """
     finding cluster for user -> return 404 -> Using serverURL as data cluster (multi-cluster support disabled)
     """
-
     try:
         User.objects.get(username=username)
     except User.DoesNotExist:
@@ -85,6 +95,7 @@ def node(request, version, username):
         return HttpResponseNotFound(constants.ERR_UID_OR_EMAIL_IN_USE)
 
 
+@debug_sync_request
 @fix_username
 @csrf_exempt
 def register_check(request, username):
@@ -122,32 +133,43 @@ def exists(request, version, username):
             logger.debug("User %r exist." % username)
             return HttpResponse(constants.USER_EXIST)
     elif request.method == 'PUT':
-        # Check for aviability of recaptcha 
-        # (can be found at: http://pypi.python.org/pypi/recaptcha-client)
-        try:
-            from recaptcha.client.captcha import submit
-        except ImportError:
-            logger.error("Captcha requested but unable to import the 'recaptcha' package!")
-            return HttpResponse("Captcha support disabled due to missing Python package 'recaptcha'.")
-        if not getattr(settings.WEAVE, "RECAPTCHA_PRIVATE_KEY"):
-            logger.error("Trying to create user but settings.WEAVE.RECAPTCHA_PRIVATE_KEY not set")
-            raise ImproperlyConfigured
         # Handle user creation.
         data = json.loads(request.raw_post_data)
-        # Usernames are limited to a length of max. 30 chars.
-        # http://docs.djangoproject.com/en/dev/topics/auth/#django.contrib.auth.models.User.username
-        if len(username) > 30 or len(data['password']) > 256:
-            return HttpResponseBadRequest()
-        result = submit(
-                        data['captcha-challenge'],
-                        data['captcha-response'],
-                        settings.WEAVE.RECAPTCHA_PRIVATE_KEY,
-                        request.META['REMOTE_ADDR']
-                        )
-        if not result.is_valid:
-            # Captcha failed.
-            return HttpResponseBadRequest()
-        User.objects.create_user(username, data['email'], data['password'])
+
+        if settings.WEAVE.DONT_USE_CAPTCHA == True:
+            logger.warn("Create user without captcha. You should activate captcha!")
+        else:
+            # Check for aviability of recaptcha 
+            # (can be found at: http://pypi.python.org/pypi/recaptcha-client)
+            try:
+                from recaptcha.client.captcha import submit
+            except ImportError:
+                logger.error("Captcha requested but unable to import the 'recaptcha' package!")
+                return HttpResponse("Captcha support disabled due to missing Python package 'recaptcha'.")
+            if not getattr(settings.WEAVE, "RECAPTCHA_PRIVATE_KEY"):
+                logger.error("Trying to create user but settings.WEAVE.RECAPTCHA_PRIVATE_KEY not set")
+                raise ImproperlyConfigured
+
+            # Usernames are limited to a length of max. 30 chars.
+            # http://docs.djangoproject.com/en/dev/topics/auth/#django.contrib.auth.models.User.username
+            if len(username) > 30 or len(data['password']) > 256:
+                return HttpResponseBadRequest()
+            result = submit(
+                            data['captcha-challenge'],
+                            data['captcha-response'],
+                            settings.WEAVE.RECAPTCHA_PRIVATE_KEY,
+                            request.META['REMOTE_ADDR']
+                            )
+            if not result.is_valid:
+                # Captcha failed.
+                return HttpResponseBadRequest()
+
+        try:
+            user = User.objects.create_user(username, data['email'], data['password'])
+        except Exception, err:
+            logger.error("Can't create user: %s" % err)
+        else:
+            logger.info("User %r with email %r created" % (user, data['email']))
         return HttpResponse()
     else:
         raise NotImplemented()

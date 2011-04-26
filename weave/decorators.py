@@ -258,6 +258,30 @@ def weave_render_response(func):
     return wrapper
 
 
+def debug_sync_request(func):
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if not settings.WEAVE.DEBUG_REQUEST:
+            return func(request, *args, **kwargs)
+
+        logger.debug("view args: %s" % repr(args))
+        logger.debug("view kwargs: %s" % repr(kwargs))
+
+        response = func(request, *args, **kwargs)
+
+        logger.debug("request.GET: %s" % repr(request.GET))
+        logger.debug("request.POST: %s" % repr(request.POST))
+        logger.debug("response.status_code: %r" % response.status_code)
+        logger.debug("response headers: %s" % repr(response.items()))
+        logger.debug("response raw content: %s" % repr(response.content))
+
+        if response["content-type"] == "application/json":
+            data = json.loads(response.content)
+            logger.debug("content: %s" % json.dumps(data, indent=4))
+
+        return response
+    return wrapper
+
 def fix_username(func):
     """
     Work-a-round for sync in Firefox v4
@@ -270,9 +294,7 @@ def fix_username(func):
     """
     @wraps(func)
     def wrapper(request, *args, **kwargs):
-        print args, kwargs
         if "username" in kwargs and len(kwargs["username"]) > 30:
             kwargs["username"] = kwargs["username"][:30]
-        print args, kwargs
         return func(request, *args, **kwargs)
     return wrapper
