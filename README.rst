@@ -2,7 +2,7 @@
  description
 =============
 
-django-sync-server is a reusable application which implements a Mozilla Labs Weave server for Django.
+django-sync-server is a reusable application which implements a Firefox sync server for Django.
 
 ---------------------
 What is Firefox Sync?
@@ -41,6 +41,11 @@ Unofficial debian packages: http://debian.fladi.at/pool/main/d/django-sync-serve
 =========
  history
 =========
+
+- v0.3.0
+
+  - Add work-a-round for username longer than 30 characters (see: https://github.com/jedie/django-sync-server/issues/8 )
+  - Add DONT_USE_CAPTCHA and DEBUG_REQUEST to app settings.
 
 - v0.2.1
 
