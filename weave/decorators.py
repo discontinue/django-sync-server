@@ -20,8 +20,9 @@
     @author: Michael Fladischer <michael@fladi.at>
 '''
 
-import base64
 from datetime import datetime
+import base64
+import pprint
 
 try:
     from functools import wraps
@@ -292,7 +293,7 @@ def debug_sync_request(func):
         response = func(request, *args, **kwargs)
 
         logger.debug("request.GET: %s" % repr(request.GET))
-        logger.debug("request.POST: %s" % repr(request.POST))
+        logger.debug("request.POST: %s" % pprint.pformat(request.POST))
         logger.debug("response.status_code: %r" % response.status_code)
         logger.debug("response headers: %s" % repr(response.items()))
         logger.debug("response raw content: %s" % repr(response.content))
