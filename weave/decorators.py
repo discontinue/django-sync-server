@@ -45,6 +45,16 @@ from weave import Logging
 
 logger = Logging.get_logger()
 
+def _fix_username(username):
+    if len(username) <= 30:
+        return username
+
+    new_username = username[:30]
+
+    logger.warn("Username %r cut to %r" % (username, new_username))
+
+    return new_username
+
 
 def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
     """
@@ -69,6 +79,7 @@ def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
 
     # They are not logged in. See if they provided login credentials
     if 'HTTP_AUTHORIZATION' in request.META:
+        logger.debug("HTTP_AUTHORIZATION: %r" % request.META['HTTP_AUTHORIZATION'])
         # NOTE: We are only support basic authentication for now.
         auth = request.META['HTTP_AUTHORIZATION'].split()
         if len(auth) != 2:
@@ -81,22 +92,33 @@ def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
             logger.debug("HTTP_AUTHORIZATION is not 'basic'")
             return HttpResponseBadRequest()
 
-        uname, passwd = base64.b64decode(auth_data).split(':')
-        user = authenticate(username=uname, password=passwd)
+        username, password = base64.b64decode(auth_data).split(':')
+
+        username = _fix_username(username)
+        if len(username) > 30:
+            logger.error("Username %r is longer than 30 characters!" % username)
+            return HttpResponseBadRequest()
+
+        if len(password) > 256:
+            logger.error("Password %r is longer than 256 characters!" % password)
+            return HttpResponseBadRequest()
+
+        user = authenticate(username=username, password=password)
         if user is None:
-            logger.debug("basicauth error: user %r unknown or password wrong." % uname)
+            logger.debug("basicauth error: user %r unknown or password wrong." % username)
         else:
             if not user.is_active:
-                logger.debug("basicauth error: user %r is not active." % uname)
+                logger.debug("basicauth error: user %r is not active." % username)
             else:
                 login(request, user)
                 request.user = user
-                logger.debug("basicauth success: user %r logged in." % uname)
+                logger.debug("basicauth success: user %r logged in." % username)
                 return view(request, *args, **kwargs)
 
     # Either they did not provide an authorization header or
     # something in the authorization attempt failed. Send a 401
     # back to them to ask them to authenticate.
+    logger.debug("No HTTP_AUTHORIZATION send, yet.")
     response = HttpResponse()
     response.status_code = 401 # Unauthorized: request requires user authentication
     response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
@@ -282,6 +304,8 @@ def debug_sync_request(func):
         return response
     return wrapper
 
+
+
 def fix_username(func):
     """
     Work-a-round for sync in Firefox v4
@@ -294,7 +318,7 @@ def fix_username(func):
     """
     @wraps(func)
     def wrapper(request, *args, **kwargs):
-        if "username" in kwargs and len(kwargs["username"]) > 30:
-            kwargs["username"] = kwargs["username"][:30]
+        if "username" in kwargs:
+            kwargs["username"] = _fix_username(kwargs["username"])
         return func(request, *args, **kwargs)
     return wrapper
