@@ -14,10 +14,15 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
 # django-sync-server own stuff
-from weave import Logging
+from weave import Logging, VERSION_STRING
 from weave.decorators import weave_assert_version, debug_sync_request
+from django.shortcuts import render_to_response
+import time
+from weave.models import Wbo
+
 
 logger = Logging.get_logger()
+
 
 @debug_sync_request
 @weave_assert_version(['1.0', '1.1'])
@@ -39,3 +44,52 @@ def captcha(request, version):
         raise ImproperlyConfigured
     # Send a simple HTML to the client. It get's rendered inside the Weave client.
     return HttpResponse("<html><body>%s</body></html>" % displayhtml(settings.WEAVE.RECAPTCHA_PUBLIC_KEY))
+
+
+def info_page(request):
+    server_url = request.build_absolute_uri(request.path)
+    if not server_url.endswith("/"):
+        # sync setup dialog only accept the server url if it's ends with a slash
+        server_url += "/"
+
+    context = {
+        "title": "django-sync-server - info page",
+        "request": request,
+        "weave_version": VERSION_STRING,
+        "server_url":server_url,
+    }
+
+    if request.user.is_active:
+        start_time = time.time()
+
+        payload_queryset = Wbo.objects.filter(user=request.user.id).only("payload")
+
+        wbo_count = 0
+        payload_size = 0
+        for item in payload_queryset.iterator():
+            wbo_count += 1
+            payload_size += len(item.payload)
+
+        modified_queryset = Wbo.objects.filter(user=request.user.id).only("modified")
+        try:
+            latest = modified_queryset.latest("modified").modified
+        except Wbo.DoesNotExist:
+            # User hasn't used sync, so no WBOs exist from him
+            latest = None
+            oldest = None
+        else:
+            oldest = modified_queryset.order_by("modified")[0].modified
+
+        print latest, oldest
+
+        duration = time.time() - start_time
+
+        context.update({
+            "wbo_count": wbo_count,
+            "payload_size": payload_size,
+            "duration": duration,
+            "latest_modified": latest,
+            "oldest_modified": oldest,
+        })
+
+    return render_to_response("weave/info_page.html", context)

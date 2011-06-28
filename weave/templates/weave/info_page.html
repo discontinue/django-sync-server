@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+
+{% block branding %}
+<h1 id="site-name">{{ title }}</h1>
+{% endblock %}
+
+{% block content %}
+<p>
+	Use <strong>{{ server_url }}</strong> as server url in your weave client preferences.
+</p>
+
+{% if request.user %}
+<p>You logged in as <strong>{{ request.user }}</strong>.</p>
+<h2>User statistics</h2>
+<dl>
+  <dt>WBO count</dt>
+  <dd>{{ wbo_count }}</dd>
+  <dt>Payload size together</dt>
+  <dd>{{ payload_size|filesizeformat }}</dd>
+  <dt>Latest entry</dt>
+  <dd title="{{ latest_modified|date:_("DATETIME_FORMAT") }}">{{ latest_modified|timesince }}</dd>
+  <dt>Oldest entry</dt>
+  <dd title="{{ oldest_modified|date:_("DATETIME_FORMAT") }}">{{ oldest_modified|timesince }}</dd>  
+</dl>
+<p><small>(Calculated in {{ duration|stringformat:".2f" }}sec. )</small></p>
+
+{% else %}
+<p>You not logged in. No statistics available for anonymous user.</p>
+{% endif %}
+{% endblock content %}
+
+{% block footer %}
+<div id="footer">
+	<address><a href="http://code.google.com/p/django-sync-server/" title="goto project homepage">django-sync-server v{{ weave_version }}</a></address>
+</div>
+{% endblock %}
