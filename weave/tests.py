@@ -132,6 +132,21 @@ class WeaveServerTest(TestCase):
         self.failUnlessEqual(response.content, u'{"failed": [], "success": ["12345678-90AB-CDEF-1234-567890ABCDEF"]}')
         self.failUnlessEqual(response["content-type"], "application/json")
 
+    def test_csrf_exempt(self):
+        url = reverse("weave-col_storage", kwargs={"username":"testuser", "version":"1.1", "col_name":"foobar"})
+        data = (
+            u'[{"id": "12345678-90AB-CDEF-1234-567890ABCDEF", "payload": "This is the payload"}]'
+        )
+        csrf_client = Client(enforce_csrf_checks=True)
+
+        response = csrf_client.post(url, data=data, content_type="application/json", HTTP_AUTHORIZATION=self.auth_data)
+
+        self.failUnlessEqual(response.content, u'{"failed": [], "success": ["12345678-90AB-CDEF-1234-567890ABCDEF"]}')
+        self.failUnlessEqual(response["content-type"], "application/json")
+
+        # Check if the csrf_exempt adds the csrf_exempt attribute to response:
+        self.failUnlessEqual(response.csrf_exempt, True)
+
     def test_delete_not_existing_wbo(self):
         """
         http://github.com/jedie/django-sync-server/issues#issue/6
@@ -186,7 +201,7 @@ if __name__ == "__main__":
     from django.core import management
 
 #    tests = "weave"
-    tests = "weave.WeaveServerTest.test_create_user"
-#    tests = "weave.WeaveServerTest.test_csrf_exempt"
+#    tests = "weave.WeaveServerTest.test_create_user"
+    tests = "weave.WeaveServerTest.test_csrf_exempt"
 
     management.call_command('test', tests, verbosity=1)
