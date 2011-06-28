@@ -39,6 +39,22 @@ Unofficial debian packages: http://debian.fladi.at/pool/main/d/django-sync-serve
 
 
 =========
+ migrate
+=========
+
+- v0.3.0 to v0.4.0
+
+We used django-south to change the existing models. Do this:
+
+    ~$ cd django_sync_server_env
+    ~/django_sync_server_env$ source bin/activate
+    (django_sync_server_env)~/django_sync_server_env$ cd src/django-sync-server/testproject
+    (django_sync_server_env)~/django_sync_server_env/src/django-sync-server/testproject$ ./manage.py migrate weave 0001 --fake
+    (django_sync_server_env)~/django_sync_server_env/src/django-sync-server/testproject$ ./manage.py migrate weave
+
+
+
+=========
  history
 =========
 

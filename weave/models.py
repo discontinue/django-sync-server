@@ -47,7 +47,7 @@ class CollectionManager(CurrentSiteManager):
 
 class Collection(BaseModel):
     """
-    https://wiki.mozilla.org/Labs/Weave/Sync/1.0/Setup
+    http://docs.services.mozilla.com/storage/apis-1.1.html
     
     inherited from BaseModel:
         modified -> datetime of the last change
@@ -73,6 +73,9 @@ class WboManager(models.Manager):
             - Check parentid, but how?
             - must wboid + parentid be unique?
         """
+        payload = payload_dict['payload']
+        payload_size = len(payload)
+
         wbo, created = Wbo.objects.get_or_create(
             collection=collection,
             user=user,
@@ -81,16 +84,20 @@ class WboManager(models.Manager):
                 'parentid': payload_dict.get('parentid', None),
                 'predecessorid': payload_dict.get('predecessorid', None),
                 'sortindex': payload_dict.get('sortindex', None),
+                'ttl': payload_dict.get('ttl', None),
                 'modified': timestamp,
-                'payload': payload_dict['payload'],
+                'payload_size': payload_size,
+                'payload': payload,
             }
         )
         if not created:
             wbo.parentid = payload_dict.get("parentid", None)
             wbo.predecessorid = payload_dict.get("predecessorid", None)
             wbo.sortindex = payload_dict.get("sortindex", None)
-            wbo.modified = timestamp,
-            wbo.payload = payload_dict["payload"]
+            wbo.ttl = payload_dict.get("ttl", None)
+            wbo.modified = timestamp
+            wbo.payload_size = payload_size
+            wbo.payload = payload
             wbo.save()
 
         return wbo, created
@@ -98,8 +105,7 @@ class WboManager(models.Manager):
 
 class Wbo(BaseModel):
     """
-    https://wiki.mozilla.org/Labs/Weave/Sync/1.0/API   
-    https://wiki.mozilla.org/Labs/Weave/Sync/1.0/Setup
+    http://docs.services.mozilla.com/storage/apis-1.1.html
     
     inherited from BaseModel:
         modified -> datetime of the last change
@@ -125,6 +131,13 @@ class Wbo(BaseModel):
             " This structure is defined separately for each WBO type. Parts of the"
             " structure may be encrypted, in which case the structure should also"
             " specify a record for decryption."
+        )
+    )
+    payload_size = models.PositiveIntegerField(help_text="Size of the payload.")
+    ttl = models.IntegerField(blank=True, null=True,
+        help_text=(
+            "The number of seconds to keep this record."
+            " After that time, this item will not be returned."
         )
     )
 

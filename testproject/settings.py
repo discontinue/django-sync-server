@@ -90,6 +90,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     "weave",
+    "south",
 )
 
 from weave import app_settings as WEAVE
