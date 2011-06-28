@@ -14,13 +14,7 @@
     django documentation for a full list of all items:
         http://www.djangoproject.com/documentation/settings/
 
-    Last commit info:
-    ~~~~~~~~~~~~~~~~~
-    $LastChangedDate:$
-    $Rev:$
-    $Author: JensDiemer $
-
-    :copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
+    :copyleft: 2010-2011 by the django-sync-server team, see AUTHORS for more details.
     :license: GNU GPL v3 or above, see LICENSE for more details.
 """
 
@@ -102,5 +96,9 @@ from weave import app_settings as WEAVE
 
 try:
     from local_settings import *
-except ImportError:
-    pass
+except ImportError, err:
+    msg = (
+        "No local_settings.py imported from '%s' !"
+        " (Original error was: %s)\n"
+    ) % (os.getcwd(), err)
+    sys.stderr.write(msg)
