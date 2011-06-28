@@ -16,8 +16,8 @@ import time
 import warnings
 
 
-__version__ = (0, 3, 0)
-__api__ = (1, 0)
+__version__ = (0, 4, 0)
+__api__ = (1, 1)
 
 
 VERSION_STRING = '.'.join(str(part) for part in __version__)
