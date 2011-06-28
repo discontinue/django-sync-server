@@ -26,14 +26,13 @@ from django.views.decorators.csrf import csrf_exempt
 # django-sync-server own stuff
 from weave import Logging
 from weave import constants
-from weave.decorators import logged_in_or_basicauth, weave_assert_version, \
-    fix_username, debug_sync_request
+from weave.decorators import logged_in_or_basicauth, weave_assert_version, debug_sync_request
 
 logger = Logging.get_logger()
 
 
 @debug_sync_request
-@weave_assert_version('1.0')
+@weave_assert_version('1.1')
 @logged_in_or_basicauth
 @csrf_exempt
 def password(request):
@@ -77,8 +76,7 @@ def password_reset(request):
 
 
 @debug_sync_request
-@weave_assert_version('1.0')
-@fix_username
+@weave_assert_version('1.1')
 @csrf_exempt
 def node(request, version, username):
     """
@@ -96,7 +94,6 @@ def node(request, version, username):
 
 
 @debug_sync_request
-@fix_username
 @csrf_exempt
 def register_check(request, username):
     """
@@ -113,8 +110,7 @@ def register_check(request, username):
         return HttpResponse(constants.ERR_UID_OR_EMAIL_IN_USE)
 
 
-@weave_assert_version('1.0')
-@fix_username
+@weave_assert_version('1.1')
 @csrf_exempt
 def exists(request, version, username):
     """

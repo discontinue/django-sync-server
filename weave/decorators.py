@@ -22,6 +22,7 @@
 
 from datetime import datetime
 import base64
+import hashlib
 import pprint
 
 try:
@@ -46,15 +47,15 @@ from weave import Logging
 
 logger = Logging.get_logger()
 
-def _fix_username(username):
-    if len(username) <= 30:
-        return username
-
-    new_username = username[:30]
-
-    logger.warn("Username %r cut to %r" % (username, new_username))
-
-    return new_username
+#def _fix_username(username):
+#    if len(username) <= 30:
+#        return username
+#
+#    new_username = username[:30]
+#
+#    logger.warn("Username %r cut to %r" % (username, new_username))
+#
+#    return new_username
 
 
 def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
@@ -95,10 +96,10 @@ def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
 
         username, password = base64.b64decode(auth_data).split(':')
 
-        username = _fix_username(username)
-        if len(username) > 30:
-            logger.error("Username %r is longer than 30 characters!" % username)
-            return HttpResponseBadRequest()
+#        username = _fix_username(username)
+#        if len(username) > 30:
+#            logger.error("Username %r is longer than 30 characters!" % username)
+#            return HttpResponseBadRequest()
 
         if len(password) > 256:
             logger.error("Password %r is longer than 256 characters!" % password)
@@ -201,10 +202,31 @@ def weave_assert_username(func, key='username'):
     def wrapper(request, *args, **kwargs):
         # Test if username argument matches logged in user.
         # Weave uses lowercase usernames inside the URL!!!
-        if request.user.username != kwargs[key]:
-            logger.debug("Logged in user %s does not match %s from URL." % (request.user.username, kwargs[key]))
-            raise PermissionDenied("Username from HTTP authentication does not match URL!")
-        return func(request, *args, **kwargs)
+
+        url_username = kwargs[key].lower()
+        logger.debug("Raw userdata from url: %r" % url_username)
+
+        if request.user.username.lower() == url_username:
+            # XXX obsolete weave 1.0 API ?
+            logger.debug("Plaintext username %r from url is ok." % url_username)
+            return func(request, *args, **kwargs)
+
+        if not len(url_username) == 32:
+            msg = "Wrong length of url userdata: %i" % len(url_username)
+            logger.debug(msg + "(should be 32 characters long)")
+            raise PermissionDenied(msg)
+
+        # check new API
+        email = request.user.email
+        sha1 = hashlib.sha1(email).digest()
+        base32encode = base64.b32encode(sha1).lower()
+        if url_username.startswith(base32encode):
+            logger.debug("Email hash %r from url is ok." % url_username)
+            return func(request, *args, **kwargs)
+
+        logger.debug("Url userdata %r doesn't fit to user %s" % (url_username, request.user.username))
+        raise PermissionDenied("URL userdata doesn't fit to user from HTTP authentication.")
+
     return wrapper
 
 
@@ -307,19 +329,19 @@ def debug_sync_request(func):
 
 
 
-def fix_username(func):
-    """
-    Work-a-round for sync in Firefox v4
-    see: https://github.com/jedie/django-sync-server/issues/8
-
-    Firefox v4 doesn't use a username anymore. It send a SHA1 from the
-    user email as the username.
-    Here we use only the first 30 characters of the username, because the
-    django user model allows only a username with a length of 30 characters.
-    """
-    @wraps(func)
-    def wrapper(request, *args, **kwargs):
-        if "username" in kwargs:
-            kwargs["username"] = _fix_username(kwargs["username"])
-        return func(request, *args, **kwargs)
-    return wrapper
+#def fix_username(func):
+#    """
+#    Work-a-round for sync in Firefox v4
+#    see: https://github.com/jedie/django-sync-server/issues/8
+#
+#    Firefox v4 doesn't use a username anymore. It send a SHA1 from the
+#    user email as the username.
+#    Here we use only the first 30 characters of the username, because the
+#    django user model allows only a username with a length of 30 characters.
+#    """
+#    @wraps(func)
+#    def wrapper(request, *args, **kwargs):
+#        if "username" in kwargs:
+#            kwargs["username"] = _fix_username(kwargs["username"])
+#        return func(request, *args, **kwargs)
+#    return wrapper

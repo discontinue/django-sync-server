@@ -20,7 +20,7 @@ from weave.decorators import weave_assert_version, debug_sync_request
 logger = Logging.get_logger()
 
 @debug_sync_request
-@weave_assert_version('1.0')
+@weave_assert_version('1.1')
 @csrf_exempt
 def captcha(request, version):
     if settings.WEAVE.DONT_USE_CAPTCHA == True:
