@@ -116,12 +116,21 @@ class WeaveServerTest(TestCase):
 
     def test_basicauth_send_authenticate(self):
         """ test if we can login via basicauth. """
-        url = reverse("weave-info", kwargs={"username":self.testuser.username, "version":"1.0"})
+        url = reverse("weave-info", kwargs={"username":self.testuser.username, "version":"1.1"})
         response = self.client.get(url, HTTP_AUTHORIZATION=self.auth_data)
         self.failUnlessEqual(response.status_code, 200)
         self.failUnlessEqual(response.content, "{}")
         self.failUnlessEqual(response["content-type"], "application/json")
         self.assertWeaveTimestamp(response)
+
+    def test_create_wbo(self):
+        url = reverse("weave-col_storage", kwargs={"username":"testuser", "version":"1.1", "col_name":"foobar"})
+        data = (
+            u'[{"id": "12345678-90AB-CDEF-1234-567890ABCDEF", "payload": "This is the payload"}]'
+        )
+        response = self.client.post(url, data=data, content_type="application/json", HTTP_AUTHORIZATION=self.auth_data)
+        self.failUnlessEqual(response.content, u'{"failed": [], "success": ["12345678-90AB-CDEF-1234-567890ABCDEF"]}')
+        self.failUnlessEqual(response["content-type"], "application/json")
 
     def test_delete_not_existing_wbo(self):
         """
@@ -129,7 +138,7 @@ class WeaveServerTest(TestCase):
         """
         url = reverse("weave-wbo_storage",
             kwargs={
-                "username":self.testuser.username, "version":"1.0",
+                "username":self.testuser.username, "version":"1.1",
                 "col_name": "foobar", "wboid": "doesn't exist",
             }
         )
@@ -141,18 +150,28 @@ class WeaveServerTest(TestCase):
 #        debug_response(response)
 
     def test_create_user(self):
-        # FIXME: Seems that JSON data doesn't transfered to view in the right way... 
-        _enable_logging()
+#        _enable_logging()
         email = u"test@test.tld"
         sync_hash = make_sync_hash(email)
         url = reverse("weave-exists", kwargs={"username":sync_hash, "version":"1.0"})
 
-        data = u'{"password":"12345678","email":"%s","captcha-challenge":null,"captcha-response":null}' % email
-        print data
+        data = u'{"password": "12345678", "email": "%s", "captcha-challenge": null, "captcha-response": null}' % email
 
+        # Bug in django? The post data doesn't transfered to view, if self.client.put() used
 #        response = self.client.put(url, data=data, content_type="application/json")
-        response = self.client.put(url, data=data, content_type="text/plain")
-        print response.content
+
+        # But this works:
+        response = self.client.post(url, data=data, content_type="application/json",
+            REQUEST_METHOD="PUT"
+            )
+
+        self.failUnlessEqual(response.content, u"")
+
+        # Check if user was created:
+        user = User.objects.get(username=sync_hash)
+        self.failUnlessEqual(user.email, email)
+
+
 
 
 #__test__ = {"doctest": """
@@ -168,5 +187,6 @@ if __name__ == "__main__":
 
 #    tests = "weave"
     tests = "weave.WeaveServerTest.test_create_user"
+#    tests = "weave.WeaveServerTest.test_csrf_exempt"
 
     management.call_command('test', tests, verbosity=1)
