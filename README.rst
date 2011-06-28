@@ -44,11 +44,13 @@ Unofficial debian packages: http://debian.fladi.at/pool/main/d/django-sync-serve
 
 - v0.3.0 to v0.4.0
 
-We used django-south to change the existing models. Do this:
+We used django-south to change the existing models. Do this::
 
     ~$ cd django_sync_server_env
     ~/django_sync_server_env$ source bin/activate
+    (django_sync_server_env)~/django_sync_server_env$ pip install South
     (django_sync_server_env)~/django_sync_server_env$ cd src/django-sync-server/testproject
+    (django_sync_server_env)~/django_sync_server_env/src/django-sync-server/testproject$ ./manage.py syncdb
     (django_sync_server_env)~/django_sync_server_env/src/django-sync-server/testproject$ ./manage.py migrate weave 0001 --fake
     (django_sync_server_env)~/django_sync_server_env/src/django-sync-server/testproject$ ./manage.py migrate weave
 
@@ -57,6 +59,11 @@ We used django-south to change the existing models. Do this:
 =========
  history
 =========
+
+- v0.4.0
+
+  - Updates to FxSync API 1.1 (see: https://github.com/jedie/django-sync-server/issues/11 )
+  - Create a info page on root url
 
 - v0.3.0
 
