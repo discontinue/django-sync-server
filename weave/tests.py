@@ -28,11 +28,13 @@ from django.test import TestCase
 from django.conf import settings
 
 from weave import Logging
+from weave.utils import make_sync_hash
 
-# Uncomment this, to see logging output:
-#logger = Logging.get_logger()
-#handler = logging.StreamHandler()
-#logger.addHandler(handler)
+
+def _enable_logging():
+    logger = Logging.get_logger()
+    handler = logging.StreamHandler()
+    logger.addHandler(handler)
 
 
 class WeaveServerTest(TestCase):
@@ -103,7 +105,7 @@ class WeaveServerTest(TestCase):
             response["www-authenticate"], 'Basic realm="%s"' % settings.WEAVE.BASICAUTH_REALM
         )
         self.failUnlessEqual(response.content, "")
-        
+
     def test_disable_basicauth(self):
         """ We should not get a basicauth response, if login is disabled. """
         settings.WEAVE.DISABLE_LOGIN = True
@@ -134,9 +136,23 @@ class WeaveServerTest(TestCase):
         response = self.client.delete(url, HTTP_AUTHORIZATION=self.auth_data)
         self.assertContains(response, "Page not found (404)", count=None, status_code=404)
         self.failUnlessEqual(response["content-type"], "text/html; charset=utf-8")
-        
+
 #        from django_tools.unittest_utils.BrowserDebug import debug_response
 #        debug_response(response)
+
+    def test_create_user(self):
+        # FIXME: Seems that JSON data doesn't transfered to view in the right way... 
+        _enable_logging()
+        email = u"test@test.tld"
+        sync_hash = make_sync_hash(email)
+        url = reverse("weave-exists", kwargs={"username":sync_hash, "version":"1.0"})
+
+        data = u'{"password":"12345678","email":"%s","captcha-challenge":null,"captcha-response":null}' % email
+        print data
+
+#        response = self.client.put(url, data=data, content_type="application/json")
+        response = self.client.put(url, data=data, content_type="text/plain")
+        print response.content
 
 
 #__test__ = {"doctest": """
@@ -149,4 +165,8 @@ class WeaveServerTest(TestCase):
 if __name__ == "__main__":
     # Run all unittest directly
     from django.core import management
-    management.call_command('test', "weave", verbosity=1)
+
+#    tests = "weave"
+    tests = "weave.WeaveServerTest.test_create_user"
+
+    management.call_command('test', tests, verbosity=1)
