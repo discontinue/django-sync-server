@@ -22,7 +22,6 @@
 
 from datetime import datetime
 import base64
-import hashlib
 import pprint
 
 try:
@@ -39,23 +38,13 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseBadRequest, \
     HttpResponseForbidden
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 
-from weave.utils import weave_timestamp
+from weave.utils import weave_timestamp, make_sync_hash
 from weave import Logging
 
 
 logger = Logging.get_logger()
-
-#def _fix_username(username):
-#    if len(username) <= 30:
-#        return username
-#
-#    new_username = username[:30]
-#
-#    logger.warn("Username %r cut to %r" % (username, new_username))
-#
-#    return new_username
 
 
 def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
@@ -218,13 +207,16 @@ def weave_assert_username(func, key='username'):
 
         # check new API
         email = request.user.email
-        sha1 = hashlib.sha1(email).digest()
-        base32encode = base64.b32encode(sha1).lower()
-        if url_username.startswith(base32encode):
+        sync_hash = make_sync_hash(email)
+        if url_username.startswith(sync_hash):
             logger.debug("Email hash %r from url is ok." % url_username)
             return func(request, *args, **kwargs)
 
         logger.debug("Url userdata %r doesn't fit to user %s" % (url_username, request.user.username))
+
+        logger.info("Logout user %s" % request.user)
+        logout(request)
+
         raise PermissionDenied("URL userdata doesn't fit to user from HTTP authentication.")
 
     return wrapper
@@ -246,11 +238,17 @@ def weave_assert_version(version):
                 msg = "no version specified in URL"
                 logger.error(msg)
                 raise AssertionError(msg)
-            if kwargs['version'] != version:
-                msg = "unsupported weave client version: %r" % kwargs['version']
-                logger.error(msg)
-                raise AssertionError(msg)
-            return func(request, *args, **kwargs)
+
+            url_version = kwargs['version']
+            if isinstance(version, (list, tuple)) and url_version in version:
+                return func(request, *args, **kwargs)
+            elif url_version == version:
+                return func(request, *args, **kwargs)
+
+            msg = "unsupported weave client version: %r" % url_version
+            logger.error(msg)
+            raise AssertionError(msg)
+
         return wrapper
     return decorator
 
@@ -328,20 +326,3 @@ def debug_sync_request(func):
     return wrapper
 
 
-
-#def fix_username(func):
-#    """
-#    Work-a-round for sync in Firefox v4
-#    see: https://github.com/jedie/django-sync-server/issues/8
-#
-#    Firefox v4 doesn't use a username anymore. It send a SHA1 from the
-#    user email as the username.
-#    Here we use only the first 30 characters of the username, because the
-#    django user model allows only a username with a length of 30 characters.
-#    """
-#    @wraps(func)
-#    def wrapper(request, *args, **kwargs):
-#        if "username" in kwargs:
-#            kwargs["username"] = _fix_username(kwargs["username"])
-#        return func(request, *args, **kwargs)
-#    return wrapper

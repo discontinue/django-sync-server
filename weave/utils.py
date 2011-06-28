@@ -6,13 +6,15 @@
     Created on 15.03.2010
     
     @license: GNU GPL v3 or above, see LICENSE for more details.
-    @copyright: 2010 see AUTHORS for more details.
+    @copyright: 2010-2011 see AUTHORS for more details.
     @author: Jens Diemer
     @author: FladischerMichael
 '''
 
-import time
 from datetime import datetime
+import base64
+import hashlib
+import time
 
 from weave import Logging
 
@@ -78,3 +80,15 @@ def limit_wbo_queryset(request, queryset):
         queryset = queryset[:int(limit)]
 
     return queryset
+
+
+def make_sync_hash(txt):
+    """
+    make a base32 encoded SHA1 hash value.
+    Used in firefox sync for creating a username from the email address.
+    See also:
+    https://hg.mozilla.org/services/minimal-server/file/5ee9d9a4570a/weave_minimal/create_user#l87
+    """
+    sha1 = hashlib.sha1(txt).digest()
+    base32encode = base64.b32encode(sha1).lower()
+    return base32encode

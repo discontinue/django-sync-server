@@ -27,6 +27,7 @@ from django.views.decorators.csrf import csrf_exempt
 from weave import Logging
 from weave import constants
 from weave.decorators import logged_in_or_basicauth, weave_assert_version, debug_sync_request
+from weave.utils import make_sync_hash
 
 logger = Logging.get_logger()
 
@@ -76,7 +77,7 @@ def password_reset(request):
 
 
 @debug_sync_request
-@weave_assert_version('1.1')
+@weave_assert_version(['1.0', '1.1'])
 @csrf_exempt
 def node(request, version, username):
     """
@@ -110,7 +111,7 @@ def register_check(request, username):
         return HttpResponse(constants.ERR_UID_OR_EMAIL_IN_USE)
 
 
-@weave_assert_version('1.1')
+@weave_assert_version([u'1.0', u'1.1'])
 @csrf_exempt
 def exists(request, version, username):
     """
@@ -130,6 +131,7 @@ def exists(request, version, username):
             return HttpResponse(constants.USER_EXIST)
     elif request.method == 'PUT':
         # Handle user creation.
+        logger.debug("Raw post data: %r" % request.raw_post_data)
         data = json.loads(request.raw_post_data)
 
         if settings.WEAVE.DONT_USE_CAPTCHA == True:
@@ -146,10 +148,6 @@ def exists(request, version, username):
                 logger.error("Trying to create user but settings.WEAVE.RECAPTCHA_PRIVATE_KEY not set")
                 raise ImproperlyConfigured
 
-            # Usernames are limited to a length of max. 30 chars.
-            # http://docs.djangoproject.com/en/dev/topics/auth/#django.contrib.auth.models.User.username
-            if len(username) > 30 or len(data['password']) > 256:
-                return HttpResponseBadRequest()
             result = submit(
                             data['captcha-challenge'],
                             data['captcha-response'],
@@ -160,12 +158,28 @@ def exists(request, version, username):
                 # Captcha failed.
                 return HttpResponseBadRequest()
 
+        if len(username) > 32 or len(data['password']) > 256:
+            return HttpResponseBadRequest()
+
+        email = data['email']
+        sync_hash = make_sync_hash(email)
+        if not sync_hash == username:
+            msg = "Error in sync hash: %r != %r" % (sync_hash, username)
+            logger.error(msg)
+            return HttpResponseBadRequest(msg)
+
+        if len(username) <= 30:
+            # Cut the sync sha1 hash to 30 characters, because
+            # usernames are limited in django to a length of max. 30 chars.
+            # http://docs.djangoproject.com/en/dev/topics/auth/#django.contrib.auth.models.User.username
+            username = username[:30]
+
         try:
-            user = User.objects.create_user(username, data['email'], data['password'])
+            user = User.objects.create_user(username, email, data['password'])
         except Exception, err:
             logger.error("Can't create user: %s" % err)
         else:
-            logger.info("User %r with email %r created" % (user, data['email']))
+            logger.info("User %r with email %r created" % (user, email))
         return HttpResponse()
     else:
         raise NotImplemented()
