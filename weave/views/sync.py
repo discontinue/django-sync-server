@@ -143,13 +143,18 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
             raise NotImplementedError
 
         for item in data:
-            wbo, created = Wbo.objects.create_or_update(item, collection, request.user, timestamp)
-            status['success'].append(wbo.wboid)
-
-            if created:
-                logger.debug("New wbo created: %s" % wbo)
+            try:
+                wbo, created = Wbo.objects.create_or_update(item, collection, request.user, timestamp)
+            except ValidationError, err:
+                logger.debug("Can't create Wbo from %r: %s" % (item, err))
+                status['failed'].append(item["id"])
             else:
-                logger.debug("Existing wbo updated: %s" % wbo)
+                status['success'].append(wbo.wboid)
+
+                if created:
+                    logger.debug("New wbo created: %s" % wbo)
+                else:
+                    logger.debug("Existing wbo updated: %s" % wbo)
 
         return status
     elif request.method == 'DELETE':

@@ -141,6 +141,17 @@ class Wbo(BaseModel):
         )
     )
 
+    def clean(self):
+        # Don't allow draft entries to have a pub_date.
+        if self.ttl is not None:
+            if self.ttl < 0 or self.ttl > 31536000:
+                # from https://hg.mozilla.org/services/server-storage/file/830a414aaed7/syncstorage/wbo.py#l80
+                raise ValidationError('TTL %r out of range.' % self.ttl)
+
+    def save(self, *args, **kwarg):
+        self.full_clean()
+        super(Wbo, self).save(*args, **kwarg)
+
     def get_response_dict(self):
         response_dict = {
             "id": self.wboid,

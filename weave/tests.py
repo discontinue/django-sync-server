@@ -21,12 +21,18 @@ if __name__ == "__main__":
     os.environ["DJANGO_SETTINGS_MODULE"] = "testproject.settings"
 
 
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.test.client import Client
 from django.test import TestCase
 from django.conf import settings
 
+#from django_tools.utils import info_print
+#info_print.redirect_stdout()
+
+from weave.models import Wbo, Collection
+from weave.views import sync
 from weave import Logging
 from weave.utils import make_sync_hash
 
@@ -38,8 +44,10 @@ def _enable_logging():
 
 
 class WeaveServerTest(TestCase):
-    def _pre_setup(self, *args, **kwargs):
-        super(WeaveServerTest, self)._pre_setup(*args, **kwargs)
+    def setUp(self, *args, **kwargs):
+        super(WeaveServerTest, self).setUp(*args, **kwargs)
+
+        settings.WEAVE.DISABLE_LOGIN = False
 
         # Create a test user with basic auth data
         self.testuser = User(username="testuser")
@@ -50,13 +58,11 @@ class WeaveServerTest(TestCase):
         raw_auth_data = "%s:%s" % (self.testuser.username, raw_password)
         self.auth_data = "basic %s" % base64.b64encode(raw_auth_data)
 
-    def _post_teardown(self, *args, **kwargs):
-        super(WeaveServerTest, self)._post_teardown(*args, **kwargs)
-        self.testuser.delete()
-
-    def setUp(self):
-        # Every test needs a client.
         self.client = Client()
+
+    def tearDown(self, *args, **kwargs):
+        super(WeaveServerTest, self).tearDown(*args, **kwargs)
+        self.testuser.delete()
 
     def assertWeaveTimestamp(self, response):
         """ Check if a valid weave timestamp is in response. """
@@ -132,6 +138,39 @@ class WeaveServerTest(TestCase):
         self.failUnlessEqual(response.content, u'{"failed": [], "success": ["12345678-90AB-CDEF-1234-567890ABCDEF"]}')
         self.failUnlessEqual(response["content-type"], "application/json")
 
+    def test_wbo_ttl_out_of_range1(self):
+        self.assertRaises(
+            ValidationError,
+            Wbo.objects.create,
+            user=self.testuser, wboid="1", payload="", payload_size=0, ttl= -1,
+        )
+    def test_wbo_ttl_out_of_range2(self):
+        self.assertRaises(
+            ValidationError,
+            Wbo.objects.create,
+            user=self.testuser, wboid="1", payload="", payload_size=0, ttl=31536001,
+        )
+
+    def test_post_wbo_ttl_out_of_range1(self):
+        url = reverse(sync.storage, kwargs={"username":"testuser", "version":"1.1", "col_name":"foobar"})
+        data = (
+            u'[{"id": "1", "payload": "This is the payload", "ttl": -1}]'
+        )
+        response = self.client.post(url, data=data, content_type="application/json", HTTP_AUTHORIZATION=self.auth_data)
+        self.failUnlessEqual(response.content, u'{"failed": ["1"], "success": []}')
+        self.failUnlessEqual(response["content-type"], "application/json")
+
+    def test_post_wbo_ttl_out_of_range2(self):
+        url = reverse(sync.storage, kwargs={"username":"testuser", "version":"1.1", "col_name":"foobar"})
+#        settings.DEBUG = True
+#        url += "?debug=1"
+        data = (
+            u'[{"id": "1", "payload": "This is the payload", "ttl": 31536001}]'
+        )
+        response = self.client.post(url, data=data, content_type="application/json", HTTP_AUTHORIZATION=self.auth_data)
+        self.failUnlessEqual(response.content, u'{"failed": ["1"], "success": []}')
+        self.failUnlessEqual(response["content-type"], "application/json")
+
     def test_csrf_exempt(self):
         url = reverse("weave-col_storage", kwargs={"username":"testuser", "version":"1.1", "col_name":"foobar"})
         data = (
@@ -164,6 +203,7 @@ class WeaveServerTest(TestCase):
 #        from django_tools.unittest_utils.BrowserDebug import debug_response
 #        debug_response(response)
 
+class WeaveServerUserTest(TestCase):
     def test_create_user(self):
 #        _enable_logging()
         email = u"test@test.tld"
@@ -187,8 +227,6 @@ class WeaveServerTest(TestCase):
         self.failUnlessEqual(user.email, email)
 
 
-
-
 #__test__ = {"doctest": """
 #Another way to test that 1 + 1 is equal to 2.
 #
@@ -200,8 +238,9 @@ if __name__ == "__main__":
     # Run all unittest directly
     from django.core import management
 
-#    tests = "weave"
+    tests = "weave"
 #    tests = "weave.WeaveServerTest.test_create_user"
-    tests = "weave.WeaveServerTest.test_csrf_exempt"
+#    tests = "weave.WeaveServerTest.test_csrf_exempt"
+#    tests = "weave.WeaveServerTest.test_post_wbo_ttl_out_of_range2"
 
     management.call_command('test', tests, verbosity=1)

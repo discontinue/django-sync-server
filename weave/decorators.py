@@ -267,6 +267,7 @@ def weave_render_response(func):
     def wrapper(request, *args, **kwargs):
         timedata = datetime.now()
         data = func(request, timestamp=timedata, *args, **kwargs)
+        logger.debug("Raw response data for %r: %r" % (func.__name__, data))
         response = HttpResponse()
         response["X-Weave-Timestamp"] = weave_timestamp(timedata)
 
