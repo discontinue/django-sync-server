@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         # Adding field 'Wbo.ttl'
-        db.add_column('weave_wbo', 'ttl', self.gf('django.db.models.fields.IntegerField')(default=2100000000), keep_default=False)
+        db.add_column('weave_wbo', 'ttl', models.IntegerField(null=True, blank=True), keep_default=False)
 
 
     def backwards(self, orm):
