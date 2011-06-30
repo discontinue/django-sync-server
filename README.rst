@@ -53,7 +53,9 @@ We used django-south to change the existing models. Do this::
     (django_sync_server_env)~/django_sync_server_env/src/django-sync-server/testproject$ ./manage.py syncdb
     (django_sync_server_env)~/django_sync_server_env/src/django-sync-server/testproject$ ./manage.py migrate weave 0001 --fake
     (django_sync_server_env)~/django_sync_server_env/src/django-sync-server/testproject$ ./manage.py migrate weave
-
+ 
+Note: After South install, you must insert "south" in INSTALLED_APPS list in our own settings.py
+see also: https://github.com/jedie/django-sync-server/commit/452668fb671662a15da2faf1e1c1f642d744b5dc#diff-1
 
 
 =========
