@@ -23,10 +23,12 @@
   <dd title="{{ oldest_modified|date:_("DATETIME_FORMAT") }}">{{ oldest_modified|timesince }}</dd>  
 </dl>
 <p><small>(Calculated in {{ duration|stringformat:".2f" }}sec. )</small></p>
-
 {% else %}
 <p>You not logged in. No statistics available for anonymous user.</p>
 {% endif %}
+<p>
+	How to enable sync debug, visit <a href="http://code.google.com/p/django-sync-server/wiki/DebugHelp">DebugHelp wiki page</a>.	
+</p>
 {% endblock content %}
 
 {% block footer %}
