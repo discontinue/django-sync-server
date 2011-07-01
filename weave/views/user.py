@@ -33,7 +33,7 @@ logger = Logging.get_logger()
 
 
 @debug_sync_request
-@weave_assert_version('1.1')
+@weave_assert_version(("1.0", "1.1"))
 @logged_in_or_basicauth
 @csrf_exempt
 def password(request):
@@ -77,7 +77,7 @@ def password_reset(request):
 
 
 @debug_sync_request
-@weave_assert_version(['1.0', '1.1'])
+@weave_assert_version(("1.0", "1.1"))
 @csrf_exempt
 def node(request, version, username):
     """
@@ -111,7 +111,7 @@ def register_check(request, username):
         return HttpResponse(constants.ERR_UID_OR_EMAIL_IN_USE)
 
 
-@weave_assert_version([u'1.0', u'1.1'])
+@weave_assert_version(("1.0", "1.1"))
 @csrf_exempt
 def exists(request, version, username):
     """

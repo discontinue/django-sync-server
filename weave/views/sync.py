@@ -34,7 +34,7 @@ logger = Logging.get_logger()
 
 @debug_sync_request
 @logged_in_or_basicauth
-@weave_assert_version('1.1')
+@weave_assert_version(("1.0", "1.1"))
 @weave_assert_username
 @csrf_exempt
 @weave_render_response
@@ -51,7 +51,7 @@ def info(request, version, username, timestamp):
 
 @debug_sync_request
 @logged_in_or_basicauth
-@weave_assert_version('1.1')
+@weave_assert_version(("1.0", "1.1"))
 @weave_assert_username
 @csrf_exempt
 @weave_render_response
