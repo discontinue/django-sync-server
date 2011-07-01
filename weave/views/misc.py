@@ -59,7 +59,7 @@ def info_page(request):
         "server_url":server_url,
     }
 
-    if request.user.is_active:
+    if request.user.is_authenticated() and request.user.is_active:
         start_time = time.time()
 
         payload_queryset = Wbo.objects.filter(user=request.user.id).only("payload")

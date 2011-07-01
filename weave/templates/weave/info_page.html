@@ -9,7 +9,7 @@
 	Use <strong>{{ server_url }}</strong> as server url in your weave client preferences.
 </p>
 
-{% if request.user %}
+{% if request.user.is_authenticated %}
 <p>You logged in as <strong>{{ request.user }}</strong>.</p>
 <h2>User statistics</h2>
 <dl>
