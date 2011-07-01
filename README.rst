@@ -4,6 +4,8 @@
 
 django-sync-server is a reusable application which implements a Firefox sync server for Django.
 
+How to create a django-sync-server test virtualenv: http://code.google.com/p/django-sync-server/wiki/CreateTestEnvironment
+
 ---------------------
 What is Firefox Sync?
 ---------------------
@@ -61,6 +63,10 @@ see also: https://github.com/jedie/django-sync-server/commit/452668fb671662a15da
 =========
  history
 =========
+
+- v0.4.1
+
+  - Bugfix to support sync with Firefox v3.6 - v5 (see: https://github.com/jedie/django-sync-server/issues/11 )
 
 - v0.4.0
 
