@@ -73,7 +73,11 @@ setup(
     maintainer_email="django-sync-server@jensdiemer.de",
     url='http://code.google.com/p/django-sync-server/',
     packages=find_packages(exclude=['testproject', 'testproject.*']),
-    include_package_data=True, # include package data under svn source control
+    include_package_data=True, # include files specified by MANIFEST.in
+    install_requires=[
+        "Django>=1.3,<1.4", # Django v1.3.x
+        "South",
+    ],
     zip_safe=False,
     classifiers=[
 #        "Development Status :: 1 - Planning",
