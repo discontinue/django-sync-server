@@ -33,6 +33,11 @@ def get_authors():
 
 
 def get_long_description():
+    """
+    returns README.creole as ReStructuredText.
+    Code from:
+        https://code.google.com/p/python-creole/wiki/UseInSetup
+    """
     desc_creole = ""
     try:
         f = file(os.path.join(PACKAGE_ROOT, "README.creole"), "r")
@@ -40,7 +45,12 @@ def get_long_description():
         f.close()
         desc_creole = unicode(desc_creole, 'utf-8').strip()
 
-        from creole import creole2html, html2rest
+        try:
+            from creole import creole2html, html2rest
+        except ImportError:
+            etype, evalue, etb = sys.exc_info()
+            evalue = etype("%s - Please install python-creole, e.g.: pip install python-creole" % evalue)
+            raise etype, evalue, etb
 
         desc_html = creole2html(desc_creole)
         long_description = html2rest(desc_html)
