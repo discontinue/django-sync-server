@@ -1,17 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 """
     distutils setup
     ~~~~~~~~~~~~~~~
 
-    Last commit info:
-    ~~~~~~~~~~~~~~~~~
-    $LastChangedDate$
-    $Rev$
-    $Author$
-
-    :copyleft: 2010 by the django-sync-server team, see AUTHORS for more details.
+    :copyleft: 2010-2011 by the django-sync-server team, see AUTHORS for more details.
     :license: GNU GPL v3 or above, see LICENSE for more details.
 """
 
@@ -23,6 +17,7 @@ from setuptools import setup, find_packages
 from weave import VERSION_STRING
 
 PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 
 def get_authors():
     authors = []
@@ -36,15 +31,27 @@ def get_authors():
     f.close()
     return authors
 
+
 def get_long_description():
+    desc_creole = ""
     try:
-        f = file(os.path.join(PACKAGE_ROOT, "README.rst"), "r")
+        f = file(os.path.join(PACKAGE_ROOT, "README.creole"), "r")
+        desc_creole = f.read()
+        f.close()
+        desc_creole = unicode(desc_creole, 'utf-8').strip()
+
+        from creole import creole2html, html2rest
+
+        desc_html = creole2html(desc_creole)
+        long_description = html2rest(desc_html)
     except Exception, err:
-        return "[Error reading README.rst file: %s]" % err
-    long_description = f.read()
-    f.close()
-    long_description.strip()
+        if "sdist" in sys.argv or "--long-description" in sys.argv:
+            raise
+        # Don't raise the error e.g. in ./setup install process
+        long_description = "[Error: %s]\n%s" % (err, desc_creole)
+
     return long_description
+
 
 setup(
     name='django-sync-server',
