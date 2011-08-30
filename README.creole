@@ -95,5 +95,6 @@ Note: After South install, you must insert "south" in INSTALLED_APPS list in our
 | GitHub                | https://github.com/jedie/django-sync-server
 | PyPi                  | http://pypi.python.org/pypi/django-sync-server
 | Firefox Sync homepage | https://wiki.mozilla.org/Firefox_Sync
+| IRC                   | [[http://www.pylucid.org/permalink/304/irc-channel|#pylucid on freenode.net]]
 
 more links: [[http://code.google.com/p/django-sync-server/wiki/SyncLinks|SyncLinks Wiki page]]
