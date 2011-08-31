@@ -19,6 +19,8 @@ from weave import VERSION_STRING
 PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
+# convert creole to ReSt on-the-fly, see also:
+# https://code.google.com/p/python-creole/wiki/UseInSetup
 try:
     from creole.setup_utils import get_long_description
 except ImportError:
