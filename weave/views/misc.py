@@ -80,8 +80,6 @@ def info_page(request):
         else:
             oldest = modified_queryset.order_by("modified")[0].modified
 
-        print latest, oldest
-
         duration = time.time() - start_time
 
         context.update({
