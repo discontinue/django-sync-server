@@ -2,7 +2,7 @@
 
 django-sync-server (formerly 'django-weave') is a reusable application which implements a Firefox sync server for Django.
 
-The Server works up to FxSync v1.14.x (Firefox v11) Well tested also with SeaMonkey v2.3
+The Server works up to FxSync v1.16.x (Firefox v14) Well tested also with SeaMonkey v2.3
 
 How to create a django-sync-server test virtualenv: [[http://code.google.com/p/django-sync-server/wiki/CreateTestEnvironment|CreateTestEnvironment Wiki page]]
 
