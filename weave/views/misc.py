@@ -1,24 +1,30 @@
 # coding:utf-8
 
 '''
-Created on 27.03.2010
+    misc views
+    ~~~~~~~~~~
+    
+    Created on 27.03.2010
+    
+    Due to Mozilla Weave supporting Recaptcha solely, we have to stick with it until
+    they decide to change the interface to pluggable captchas.
 
     @license: GNU GPL v3 or above, see LICENSE for more details.
-    @copyleft: 2010-2011 by the django-sync-server team, see AUTHORS for more details.
+    @copyleft: 2010-2012 by the django-sync-server team, see AUTHORS for more details.
 '''
-# Due to Mozilla Weave supporting Recaptcha solely, we have to stick with it until
-# they decide to change the interface to pluggable captchas.
+
+import time
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.views.decorators.csrf import csrf_exempt
 
 # django-sync-server own stuff
 from weave import Logging, VERSION_STRING
 from weave.decorators import weave_assert_version, debug_sync_request
-from django.shortcuts import render_to_response
-import time
 from weave.models import Wbo
 
 
