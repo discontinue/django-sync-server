@@ -51,6 +51,9 @@ Note: After South install, you must insert "south" in INSTALLED_APPS list in our
 
 = history
 
+* v0.4.2 - 27.07.2012
+** Bugfix in info_page() page: Use RequestContext(), so that inherit template can use variables from context processors
+** remove git timestamp from version string
 * v0.4.1
 ** Bugfix to support sync with Firefox v3.6 - v5 (see: [[https://github.com/jedie/django-sync-server/issues/11]] )
 * v0.4.0
