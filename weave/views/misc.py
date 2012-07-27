@@ -12,6 +12,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+from django.template import RequestContext
 
 # django-sync-server own stuff
 from weave import Logging, VERSION_STRING
@@ -90,4 +91,4 @@ def info_page(request):
             "oldest_modified": oldest,
         })
 
-    return render_to_response("weave/info_page.html", context)
+    return render_to_response("weave/info_page.html", context, context_instance=RequestContext(request))
