@@ -160,7 +160,6 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
     elif request.method == 'DELETE':
         # FIXME: This is am mess, it needs better structure
         if col_name is None and wboid is None:
-            assert request.META.has_key('X-Confirm-Delete'), "To remove all records for your user, please make sure to include a X-Confirm-Delete HTTP header in your DELTE request!"
             Collection.on_site.filter(user=request.user).delete()
             return weave_timestamp(timestamp)
 
