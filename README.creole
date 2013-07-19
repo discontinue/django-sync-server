@@ -100,4 +100,13 @@ Note: After South install, you must insert "south" in INSTALLED_APPS list in our
 | Firefox Sync homepage | https://wiki.mozilla.org/Firefox_Sync
 | IRC                   | [[http://www.pylucid.org/permalink/304/irc-channel|#pylucid on freenode.net]]
 
-more links: [[http://code.google.com/p/django-sync-server/wiki/SyncLinks|SyncLinks Wiki page]]
+more links about firefox SyncFX: [[http://code.google.com/p/django-sync-server/wiki/SyncLinks|SyncLinks Wiki page]]
+
+Needfull informations are in [[http://code.google.com/p/django-sync-server/w/list|out google code Wiki]]:
+
+* [[http://code.google.com/p/django-sync-server/wiki/DebugHelp|How to debug]]
+* [[http://code.google.com/p/django-sync-server/wiki/WeaveSettings|How to change django/weave settings with a local_settings.py]]
+* [[http://code.google.com/p/django-sync-server/wiki/CreateTestEnvironment|Create a django-sync-server test virtualenv]]
+* [[http://code.google.com/p/django-sync-server/wiki/HTTPSDevelopment|  How to use HTTPS with Django `runserver` command]]
+
+
