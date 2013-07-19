@@ -6,7 +6,7 @@
     Created on 15.03.2010
     
     @license: GNU GPL v3 or above, see LICENSE for more details.
-    @copyleft: 2010-2011 by the django-sync-server team, see AUTHORS for more details.
+    @copyleft: 2010-2013 by the django-sync-server team, see AUTHORS for more details.
 '''
 
 from datetime import datetime
@@ -103,17 +103,7 @@ def storage(request, version, username, timestamp, col_name=None, wboid=None):
                                                                   since,
                                                                   )
 
-        if created:
-            logger.debug("Created new collection %s" % collection)
-        else:
-            logger.debug("Found existing collection %s" % collection)
-
         wbo, created = Wbo.objects.create_or_update(val, collection, request.user, timestamp)
-
-        if created:
-            logger.debug("New wbo created: %r" % wbo)
-        else:
-            logger.debug("Existing wbo updated: %r" % wbo)
 
         return weave_timestamp(timestamp)
 

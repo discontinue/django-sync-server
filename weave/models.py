@@ -7,7 +7,7 @@ FIXME: I dropped site framework integration for the sake
 Created on 15.03.2010
 
 @license: GNU GPL v3 or above, see LICENSE for more details.
-@copyright: 2010 see AUTHORS for more details.
+@copyright: 2010-2013 see AUTHORS for more details.
 @author: Jens Diemer
 @author: FladischerMichael
 '''
@@ -20,6 +20,9 @@ from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 
 from weave.utils import weave_timestamp
+from weave import Logging
+
+logger = Logging.get_logger()
 
 
 class BaseModel(models.Model):
@@ -31,17 +34,24 @@ class BaseModel(models.Model):
 
 class CollectionManager(CurrentSiteManager):
     def create_or_update(self, user, col_name, timestamp, since=None):
+        logger.debug("Created or update collection %s for user %s" % (col_name, user.username))
+
         collection, created = super(CollectionManager, self).get_or_create(
             user=user, name=col_name,
         )
 
-        # See if we have a constraint on the last modified date  
+        # See if we have a constraint on the last modified date
         if since is not None:
             if since < collection.modified:
                 raise ValidationError
 
         collection.modified = timestamp
         collection.save()
+
+        if created:
+            logger.debug("New collection %s created." % collection)
+        else:
+            logger.debug("Existing collection %s updated." % collection)
         return collection, created
 
 
@@ -73,6 +83,8 @@ class WboManager(models.Manager):
             - Check parentid, but how?
             - must wboid + parentid be unique?
         """
+        logger.debug("Created or update WBO for collection %s" % collection)
+
         payload = payload_dict['payload']
         payload_size = len(payload)
 
@@ -90,7 +102,9 @@ class WboManager(models.Manager):
                 'payload': payload,
             }
         )
-        if not created:
+        if created:
+            logger.debug("New wbo created: %r" % wbo)
+        else:
             wbo.parentid = payload_dict.get("parentid", None)
             wbo.predecessorid = payload_dict.get("predecessorid", None)
             wbo.sortindex = payload_dict.get("sortindex", None)
@@ -99,6 +113,7 @@ class WboManager(models.Manager):
             wbo.payload_size = payload_size
             wbo.payload = payload
             wbo.save()
+            logger.debug("Existing wbo updated: %r" % wbo)
 
         return wbo, created
 
