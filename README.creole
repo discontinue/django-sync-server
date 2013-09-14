@@ -30,6 +30,10 @@ Python packages available on: [[http://pypi.python.org/pypi/django-sync-server/]
 
 Unofficial debian packages: [[http://debian.fladi.at/pool/main/d/django-sync-server/]]
 
+== knwon bugs
+
+With django 1.4 you will be run into a known bug, fi you create a new user. Please read the followed issues, with a work-a-round:
+ * https://github.com/jedie/django-sync-server/issues/8
 
 = migrate
 
